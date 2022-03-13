@@ -1,0 +1,32 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ml.iamwhatiam.baostock.infrastructure.dao.StockMapper">
+
+    <resultMap id="baseResultMap" type="ml.iamwhatiam.baostock.infrastructure.dao.StockDataObject">
+        <result column="code" property="code" jdbcType="VARCHAR" javaType="string" />
+        <result column="code_name" property="codeName" jdbcType="VARCHAR" javaType="string" />
+        <result column="ipo_date" property="ipoDate" jdbcType="DATE" javaType="java.time.LocalDate" />
+        <result column="out_date" property="outDate" jdbcType="DATE" javaType="java.time.LocalDate" />
+        <result column="type" property="type" jdbcType="INTEGER" javaType="int" />
+        <result column="status" property="status" jdbcType="INTEGER" javaType="int" />
+    </resultMap>
+    <select id="findAll" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.StockDataObject" resultMap="baseResultMap">
+    SELECT code, code_name, ipo_date, out_date, type, status
+    FROM BAO_STOCK_BASIC
+    </select>
+
+    <insert id="insert" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.StockDataObject">
+        INSERT INTO BAO_STOCK_BASIC(code, code_name, ipo_date, out_date, type, status)
+        VALUES (#{code}, #{codeName}, #{ipoDate}, #{outDate}, #{type}, #{status})
+    </insert>
+
+    <insert id="update" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.StockDataObject">
+        UPDATE BAO_STOCK_BASIC
+         <set>
+               <if test="codeName != null">code_name=#{codeName},</if>
+               <if test="outDate != null">out_date=#{outDate},</if>
+               <if test="type != null">type=#{type},</if>
+               <if test="status != null">status=#{status},</if>
+         </set>
+         WHERE code=#{code}
+    </insert>
+</mapper>

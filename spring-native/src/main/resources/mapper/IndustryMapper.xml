@@ -1,0 +1,30 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ml.iamwhatiam.baostock.infrastructure.dao.IndustryMapper">
+
+    <resultMap id="baseResultMap" type="ml.iamwhatiam.baostock.infrastructure.dao.IndustryDataObject">
+        <result column="code" property="code" jdbcType="VARCHAR" javaType="string" />
+        <result column="code_name" property="codeName" jdbcType="VARCHAR" javaType="string" />
+        <result column="industry" property="industry" jdbcType="VARCHAR" javaType="string" />
+        <result column="industry_classification" property="industryClassification" jdbcType="VARCHAR" javaType="string" />
+        <result column="update_date" property="updateDate" jdbcType="DATE" javaType="java.time.LocalDate" />
+    </resultMap>
+    <select id="findAll" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.IndustryDataObject" resultMap="baseResultMap">
+        SELECT code, code_name, industry, industry_classification, update_date
+        FROM BAO_STOCK_INDUSTRY
+    </select>
+
+    <insert id="insert" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.IndustryDataObject">
+        INSERT INTO BAO_STOCK_INDUSTRY(code, code_name, industry, industry_classification, update_date)
+        VALUES (#{code}, #{codeName}, #{industry}, #{industryClassification}, #{updateDate})
+    </insert>
+
+    <insert id="update" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.IndustryDataObject">
+        UPDATE BAO_STOCK_INDUSTRY
+        <set>
+            <if test="industry != null">industry=#{industry},</if>
+            <if test="industryClassification != null">industry_classification=#{industryClassification},</if>
+            <if test="updateDate != null">update_date=#{updateDate},</if>
+        </set>
+        WHERE code=#{code}
+    </insert>
+</mapper>

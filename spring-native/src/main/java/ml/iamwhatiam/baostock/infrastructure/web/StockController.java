@@ -50,7 +50,7 @@ public class StockController {
                     @RequestParam(value = "adjustFlag", defaultValue = "2", required = false) Integer adjustFlag) {
         LocalDate start = LocalDate.parse(startDate, DateTimeFormatter.ISO_LOCAL_DATE);
         QueryHistoryKDataPlusResponse.Frequency rate = QueryHistoryKDataPlusResponse.Frequency.getInstance(frequency);
-        LocalDate end = null;
+        LocalDate end;
         if(endDate != null) {
             end = LocalDate.parse(endDate, DateTimeFormatter.ISO_LOCAL_DATE);
         } else {

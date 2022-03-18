@@ -1,0 +1,50 @@
+<configuration>
+    <property resource="application.properties" />
+    <contextName>${spring.application.name}</contextName>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${logging.pattern.console}</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${logging.file.path}/${logging.file.name}</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${logging.file.path}/${logging.file.name}.%d{yyyy-MM-dd}.%i.gz</fileNamePattern>
+            <maxFileSize>${logging.logback.rollingpolicy.max-file-size}</maxFileSize>
+            <maxHistory>${logging.logback.rollingpolicy.max-history}</maxHistory>
+            <totalSizeCap>100GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>${logging.pattern.file}</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="FILE" />
+        <maxFlushTime>100</maxFlushTime>
+        <queueSize>256</queueSize>
+        <discardingThreshold>20</discardingThreshold>
+        <includeCallerData>false</includeCallerData>
+        <neverBlock>false</neverBlock>
+    </appender>
+
+    <logger name="org.apache.catalina.startup.DigesterFactory" level="ERROR" />
+    <logger name="org.apache.catalina.util.LifecycleBase" level="ERROR" />
+    <logger name="org.apache.coyote.http11.Http11NioProtocol" level="WARN" />
+    <logger name="org.apache.sshd.common.util.SecurityUtils" level="WARN" />
+    <logger name="org.apache.tomcat.util.net.NioSelectorPool" level="WARN" />
+    <logger name="org.eclipse.jetty.util.component.AbstractLifeCycle" level="ERROR" />
+    <logger name="org.hibernate.validator.internal.util.Version" level="WARN" />
+    <logger name="org.springframework.boot.actuate.endpoint.jmx" level="WARN" />
+
+    <logger name="org.springframework" level="WARN"/>
+    <logger name="org.apache" level="WARN" />
+    <root level="${logging.level.root}">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+    </root>
+
+    <shutdownHook class="ch.qos.logback.core.hook.DelayingShutdownHook" />
+</configuration>

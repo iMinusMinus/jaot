@@ -86,15 +86,15 @@ public class NettyClient {
         EventLoopGroup eventExecutors = epoll ? new EpollEventLoopGroup() : new NioEventLoopGroup();
         Class<? extends Channel> klazz = epoll ? EpollSocketChannel.class : NioSocketChannel.class;
         bootstrap = new Bootstrap();
-        ByteBuf delimiter = Unpooled.copiedBuffer(END_OF_RESPONSE, StandardCharsets.UTF_8);
         bootstrap.group(eventExecutors)
                 .channel(klazz)
                 .handler(new ChannelInitializer<SocketChannel>() {
 
                     @Override
                     protected void initChannel(SocketChannel socketChannel) throws Exception {
+                        ByteBuf delimiter = Unpooled.copiedBuffer(END_OF_RESPONSE, StandardCharsets.UTF_8);
                         socketChannel.pipeline()
-                                .addLast("stickDecoder", new DelimiterBasedFrameDecoder(Integer.MAX_VALUE, delimiter)) // TODO
+                                .addLast("stickDecoder", new DelimiterBasedFrameDecoder(Integer.MAX_VALUE, delimiter))
                                 .addLast("decoder", new BaoStockByteToMessageDecoder())
                                 .addLast("encoder", new BaoStockMessageToByteEncoder());
                     }
@@ -247,11 +247,10 @@ public class NettyClient {
 
         private static final int PADDING_LENGTH = 10;
 
-        private static final char ZERO = '0';
-
         @Override
         protected void encode(ChannelHandlerContext ctx, BaoStockRequest request, ByteBuf byteBuf) throws Exception {
             ctx.channel().attr(AttributeKey.valueOf("id")).set(request.getId());
+            ctx.channel().attr(AttributeKey.valueOf("type")).set(request.getRequestCode());
             String body = request.encode();
             String[] array = {Constants.BAOSTOCK_CLIENT_VERSION, request.getRequestCode(), zerofill(body.length(), PADDING_LENGTH)};
             String msgHeader = StringUtils.arrayToDelimitedString(array, Constants.MESSAGE_SPLIT);
@@ -261,18 +260,19 @@ public class NettyClient {
             byteBuf.writeBytes(msg.getBytes(StandardCharsets.UTF_8));
         }
 
-        private String zerofill(int num, int length) {
-            String number = String.valueOf(num);
-            if(number.length() >= length) {
-                return number;
-            }
-            StringBuilder sb = new StringBuilder(length);
-            for(int i = number.length(); i < length; i++) {
-                sb.append(ZERO);
-            }
-            sb.append(number);
-            return sb.toString();
+    }
+
+    private static String zerofill(int num, int length) {
+        String number = String.valueOf(num);
+        if(number.length() >= length) {
+            return number;
         }
+        StringBuilder sb = new StringBuilder(length);
+        for(int i = number.length(); i < length; i++) {
+            sb.append(0);
+        }
+        sb.append(number);
+        return sb.toString();
     }
 
     public final static class BaoStockByteToMessageDecoder extends ByteToMessageDecoder {
@@ -290,24 +290,23 @@ public class NettyClient {
             if(Constants.COMPRESSED_MESSAGE_TYPE_TUPLE.contains(headerArray[1])) {
                 int headInnerLength = Integer.parseInt(headerArray[2]);
                 byte[] dst = new byte[headInnerLength];
-                copy(raw, Constants.MESSAGE_HEADER_LENGTH, headInnerLength, dst, 0);
+                System.arraycopy(raw, Constants.MESSAGE_HEADER_LENGTH, dst, 0, headInnerLength);
                 bodyRaw = decompress(dst);
                 offset = 0;
                 length = bodyRaw.length;
             }
             String msgBody = new String(bodyRaw, offset, length, StandardCharsets.UTF_8);
             String[] bodyArray = msgBody.split(Constants.MESSAGE_SPLIT);
+            if(Constants.MESSAGE_TYPE_EXCEPTIONS.equals(headerArray[1])) {
+                log.info("replace type from '{}' to '{}' avoid class cast exception", headerArray[1], ctx.channel().attr(AttributeKey.valueOf("type")).get());
+                headerArray[1] = zerofill(Integer.parseInt((String) ctx.channel().attr(AttributeKey.valueOf("type")).get()) + 1, 2);
+            }
             BaoStockResponse result = ResultFactory.newInstance(headerArray, bodyArray);
             result.id = (Long) ctx.channel().attr(AttributeKey.valueOf("id")).get();
             out.add(result);
             DefaultFuture.received(result);
         }
 
-        private void copy(byte[] src, int offset, int length, byte[] dst, int from) {
-            for(int index = 0; index < length; index++) {
-                dst[from + index] = src[offset + index];
-            }
-        }
     }
 
     static byte[] decompress(byte[] data) {

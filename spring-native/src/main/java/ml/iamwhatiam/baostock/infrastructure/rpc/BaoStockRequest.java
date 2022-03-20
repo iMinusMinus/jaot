@@ -11,7 +11,13 @@ public abstract class BaoStockRequest implements Serializable {
 
     protected static final String EMPTY = "";
 
-    protected static final String ONE = "1";
+    protected int getCurPageNum() {
+        return 1;
+    }
+
+    protected int getPerPageCount() {
+        return Constants.BAOSTOCK_PER_PAGE_COUNT;
+    }
 
     public BaoStockRequest(String userId) {
         this.userId = userId;
@@ -20,7 +26,7 @@ public abstract class BaoStockRequest implements Serializable {
     /**
      * 给netty关联read/write
      *
-     * @return
+     * @return 线程安全的递增id
      */
     public Long getId() {
         return INVOKE_ID.getAndIncrement();

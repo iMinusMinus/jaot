@@ -46,10 +46,6 @@ public class QueryHistoryKDataPlusRequest extends BaoStockRequest {
     @Getter
     private final int adjustFlag;
 
-    private static final int CUR_PAGE_NUM = 1;
-
-    private static final int PER_PAGE_COUNT = Constants.BAOSTOCK_PER_PAGE_COUNT;
-
     public QueryHistoryKDataPlusRequest(String userId, String code) {
         this(userId, code, QueryHistoryKDataPlusResponse.Frequency.DAY, 3);
     }
@@ -81,8 +77,8 @@ public class QueryHistoryKDataPlusRequest extends BaoStockRequest {
 
     @Override
     String encode() {
-        return "query_history_k_data" + Constants.MESSAGE_SPLIT + userId + Constants.MESSAGE_SPLIT + CUR_PAGE_NUM
-                + Constants.MESSAGE_SPLIT + PER_PAGE_COUNT
+        return "query_history_k_data" + Constants.MESSAGE_SPLIT + userId + Constants.MESSAGE_SPLIT + getCurPageNum()
+                + Constants.MESSAGE_SPLIT + getPerPageCount()
                 + Constants.MESSAGE_SPLIT + code + Constants.MESSAGE_SPLIT + fields
                 + Constants.MESSAGE_SPLIT + DateTimeFormatter.ISO_LOCAL_DATE.format(startDate)
                 + Constants.MESSAGE_SPLIT + (endDate == null ? EMPTY : DateTimeFormatter.ISO_LOCAL_DATE.format(endDate))

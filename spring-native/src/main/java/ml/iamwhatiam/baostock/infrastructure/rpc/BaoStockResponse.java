@@ -1,7 +1,6 @@
 package ml.iamwhatiam.baostock.infrastructure.rpc;
 
 import lombok.Getter;
-import lombok.Setter;
 import lombok.ToString;
 
 import java.io.Serializable;
@@ -11,36 +10,30 @@ public class BaoStockResponse implements Serializable {
 
     Long id;
 
-    protected String version;
+    protected final String version;
 
     /**
      * 错误代码，当为“0”时表示成功，当为非0时表示失败
      */
     @Getter
-    @Setter
-    protected String errorCode;
+    protected final String errorCode;
 
     /**
      * 错误信息，对错误的详细解释
      */
     @Getter
-    @Setter
-    protected String errorMsg;
+    protected final String errorMsg;
 
     @Getter
-    @Setter
-    protected int msgBodyLength;
+    protected final int msgBodyLength;
 
     @Getter
-    @Setter
-    protected String msgType;
+    protected final String msgType;
 
     @Getter
-    @Setter
     protected String method;
 
     @Getter
-    @Setter
     protected String userId;
 
     public BaoStockResponse(String[] headerArray, String[] bodyArray) {

@@ -31,8 +31,8 @@ public class QueryAllStockRequest extends BaoStockRequest{
 
     @Override
     String encode() {
-        return "query_all_stock" + Constants.MESSAGE_SPLIT + userId + Constants.MESSAGE_SPLIT + ONE
-                + Constants.MESSAGE_SPLIT + Constants.BAOSTOCK_PER_PAGE_COUNT
+        return "query_all_stock" + Constants.MESSAGE_SPLIT + userId + Constants.MESSAGE_SPLIT + getCurPageNum()
+                + Constants.MESSAGE_SPLIT + getPerPageCount()
                 + Constants.MESSAGE_SPLIT + DateTimeFormatter.ISO_LOCAL_DATE.format(day);
     }
 }

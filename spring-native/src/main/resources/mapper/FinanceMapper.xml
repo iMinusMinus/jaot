@@ -1,0 +1,157 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ml.iamwhatiam.baostock.infrastructure.dao.FinanceMapper">
+
+    <resultMap id="profitResultMap" type="ml.iamwhatiam.baostock.infrastructure.dao.ProfitDataObject">
+        <result column="code" property="code" jdbcType="VARCHAR" javaType="string" />
+        <result column="pub_date" property="pubDate" jdbcType="DATE" javaType="java.time.LocalDate" />
+        <result column="stat_date" property="statDate" jdbcType="DATE" javaType="java.time.LocalDate" />
+        <result column="roe_avg" property="roeAvg" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+        <result column="np_margin" property="netProfitMargin" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+        <result column="gp_margin" property="grossProfitMargin" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+        <result column="net_profit" property="netProfit" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+        <result column="eps_ttm" property="earningsPerShareTimeToMarket" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+        <result column="mb_revenue" property="primaryBusinessRevenue" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+        <result column="total_share" property="totalShare" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+        <result column="liqa_share" property="tradableShare" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+    </resultMap>
+    <select id="findAllProfitData" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.ProfitDataObject" resultMap="profitResultMap">
+        SELECT code, pub_date, stat_date, roe_avg, np_margin, gp_margin, net_profit, eps_ttm, mb_revenue, total_share, liqa_share
+        FROM BAO_STOCK_PROFIT_DATA
+    </select>
+    <select id="findLatestProfitData" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.ProfitDataObject" resultMap="profitResultMap">
+        SELECT code, max(pub_date) pub_date
+        FROM BAO_STOCK_PROFIT_DATA
+        GROUP BY code
+    </select>
+    <insert id="insertProfitData" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.ProfitDataObject">
+        INSERT INTO BAO_STOCK_PROFIT_DATA(code, pub_date, stat_date, roe_avg, np_margin, gp_margin, net_profit, eps_ttm, mb_revenue, total_share, liqa_share)
+        VALUES (#{code}, #{pubDate}, #{statDate}, #{roeAvg}, #{netProfitMargin}, #{grossProfitMargin}, #{netProfit}, #{earningsPerShareTimeToMarket}, #{primaryBusinessRevenue}, #{totalShare}, #{tradableShare})
+    </insert>
+
+    <resultMap id="operationResultMap" type="ml.iamwhatiam.baostock.infrastructure.dao.OperationDataObject">
+        <result column="code" property="code" jdbcType="VARCHAR" javaType="string" />
+        <result column="pub_date" property="pubDate" jdbcType="DATE" javaType="java.time.LocalDate" />
+        <result column="stat_date" property="statDate" jdbcType="DATE" javaType="java.time.LocalDate" />
+        <result column="nr_turn_ratio" property="noteReceiveTurnRatio" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+        <result column="nr_turn_days" property="noteReceiveTurnDays" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+        <result column="inv_turn_ratio" property="inventoryTurnRatio" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+        <result column="inv_turn_days" property="inventoryTurnDays" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+        <result column="ca_turn_ratio" property="currentAssetTurnRatio" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+        <result column="asset_turn_ratio" property="assetTurnRatio" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+    </resultMap>
+    <select id="findAllOperationData" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.OperationDataObject" resultMap="operationResultMap">
+        SELECT code, pub_date, stat_date, nr_turn_ratio, nr_turn_days, inv_turn_ratio, inv_turn_days, ca_turn_ratio, asset_turn_ratio
+        FROM BAO_STOCK_OPERATION_DATA
+    </select>
+    <select id="findLatestOperationData" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.OperationDataObject" resultMap="operationResultMap">
+        SELECT code, max(pub_date) pub_date
+        FROM BAO_STOCK_OPERATION_DATA
+        GROUP BY code
+    </select>
+    <insert id="insertOperationData" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.OperationDataObject">
+        INSERT INTO BAO_STOCK_OPERATION_DATA(code, pub_date, stat_date, nr_turn_ratio, nr_turn_days, inv_turn_ratio, inv_turn_days, ca_turn_ratio, asset_turn_ratio)
+        VALUES (#{code}, #{pubDate}, #{statDate}, #{noteReceiveTurnRatio}, #{noteReceiveTurnDays}, #{inventoryTurnRatio}, #{inventoryTurnDays}, #{currentAssetTurnRatio}, #{assetTurnRatio})
+    </insert>
+
+    <resultMap id="growthResultMap" type="ml.iamwhatiam.baostock.infrastructure.dao.GrowthDataObject">
+        <result column="code" property="code" jdbcType="VARCHAR" javaType="string" />
+        <result column="pub_date" property="pubDate" jdbcType="DATE" javaType="java.time.LocalDate" />
+        <result column="stat_date" property="statDate" jdbcType="DATE" javaType="java.time.LocalDate" />
+        <result column="yoy_equity" property="yearOverYearEquity" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+        <result column="yoy_asset" property="yearOverYearAsset" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+        <result column="yoy_ni" property="yearOverYearNetProfit" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+        <result column="yoy_eps_basic" property="yearOverYearEarningsPerShareBasic" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+        <result column="yoy_pni" property="yearOverYearNetProfitAttributableToShareHoldersOfTheParentCompany" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+    </resultMap>
+    <select id="findAllGrowthData" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.GrowthDataObject" resultMap="growthResultMap">
+        SELECT code, pub_date, stat_date, yoy_equity, yoy_asset, yoy_ni, yoy_eps_basic, yoy_pni
+        FROM BAO_STOCK_GROWTH_DATA
+    </select>
+    <select id="findLatestGrowthData" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.GrowthDataObject" resultMap="growthResultMap">
+        SELECT code, max(pub_date) pub_date
+        FROM BAO_STOCK_GROWTH_DATA
+        GROUP BY code
+    </select>
+    <insert id="insertGrowthData" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.GrowthDataObject">
+        INSERT INTO BAO_STOCK_GROWTH_DATA(code, pub_date, stat_date, yoy_equity, yoy_asset, yoy_ni, yoy_eps_basic, yoy_pni)
+        VALUES (#{code}, #{pubDate}, #{statDate}, #{yearOverYearEquity}, #{yearOverYearAsset}, #{yearOverYearNetProfit}, #{yearOverYearEarningsPerShareBasic}, #{yearOverYearNetProfitAttributableToShareHoldersOfTheParentCompany})
+    </insert>
+
+    <resultMap id="balanceResultMap" type="ml.iamwhatiam.baostock.infrastructure.dao.BalanceDataObject">
+        <result column="code" property="code" jdbcType="VARCHAR" javaType="string" />
+        <result column="pub_date" property="pubDate" jdbcType="DATE" javaType="java.time.LocalDate" />
+        <result column="stat_date" property="statDate" jdbcType="DATE" javaType="java.time.LocalDate" />
+        <result column="current_ratio" property="currentRatio" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+        <result column="quick_ratio" property="quickRatio" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+        <result column="cash_ratio" property="cashRatio" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+        <result column="yoy_liability" property="yearOverYearLiability" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+        <result column="liability_to_asset" property="liabilityToAsset" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+        <result column="asset_to_equity" property="assetToEquity" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+    </resultMap>
+    <select id="findAllBalanceData" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.BalanceDataObject" resultMap="balanceResultMap">
+        SELECT code, pub_date, stat_date, current_ratio, quick_ratio, cash_ratio, yoy_liability, liability_to_asset, asset_to_equity
+        FROM BAO_STOCK_BALANCE_DATA
+    </select>
+    <select id="findLatestBalanceData" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.BalanceDataObject" resultMap="balanceResultMap">
+        SELECT code, max(pub_date) pub_date
+        FROM BAO_STOCK_BALANCE_DATA
+        GROUP BY code
+    </select>
+    <insert id="insertBalanceData" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.BalanceDataObject">
+        INSERT INTO BAO_STOCK_BALANCE_DATA(code, pub_date, stat_date, current_ratio, quick_ratio, cash_ratio, yoy_liability, liability_to_asset, asset_to_equity)
+        VALUES (#{code}, #{pubDate}, #{statDate}, #{currentRatio}, #{quickRatio}, #{cashRatio}, #{yearOverYearLiability}, #{liabilityToAsset}, #{assetToEquity})
+    </insert>
+
+    <resultMap id="cashFlowResultMap" type="ml.iamwhatiam.baostock.infrastructure.dao.CashFlowDataObject">
+        <result column="code" property="code" jdbcType="VARCHAR" javaType="string" />
+        <result column="pub_date" property="pubDate" jdbcType="DATE" javaType="java.time.LocalDate" />
+        <result column="stat_date" property="statDate" jdbcType="DATE" javaType="java.time.LocalDate" />
+        <result column="ca_to_asset" property="currentAssetToAsset" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+        <result column="nca_to_asset" property="nonCurrentAssetToAsset" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+        <result column="tangible_asset_to_asset" property="tangibleAssetToAsset" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+        <result column="ebit_to_interest" property="earningsBeforeInterestAndTaxToInterest" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+        <result column="cfo_to_or" property="operationalCashFlowToOperationalRevenue" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+        <result column="cfo_to_np" property="operationalCashFlowToNetProfit" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+        <result column="cfo_to_gr" property="operationalCashFlowToGrossRevenue" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+    </resultMap>
+    <select id="findAllCashFlowData" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.CashFlowDataObject" resultMap="cashFlowResultMap">
+        SELECT code, pub_date, stat_date, ca_to_asset, nca_to_asset, tangible_asset_to_asset, ebit_to_interest, cfo_to_or, cfo_to_np, cfo_to_gr
+        FROM BAO_STOCK_CASH_FLOW_DATA
+    </select>
+    <select id="findLatestCashFlowData" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.CashFlowDataObject" resultMap="cashFlowResultMap">
+        SELECT code, max(pub_date) pub_date
+        FROM BAO_STOCK_CASH_FLOW_DATA
+        GROUP BY code
+    </select>
+    <insert id="insertCashFlowData" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.CashFlowDataObject">
+        INSERT INTO BAO_STOCK_CASH_FLOW_DATA(code, pub_date, stat_date, ca_to_asset, nca_to_asset, tangible_asset_to_asset, ebit_to_interest, cfo_to_or, cfo_to_np, cfo_to_gr)
+        VALUES (#{code}, #{pubDate}, #{statDate}, #{currentAssetToAsset}, #{nonCurrentAssetToAsset}, #{tangibleAssetToAsset}, #{operationalCashFlowToOperationalRevenue}, #{operationalCashFlowToOperationalRevenue}, #{operationalCashFlowToNetProfit}, #{operationalCashFlowToGrossRevenue})
+    </insert>
+
+    <resultMap id="dupontResultMap" type="ml.iamwhatiam.baostock.infrastructure.dao.DupontDataObject">
+        <result column="code" property="code" jdbcType="VARCHAR" javaType="string" />
+        <result column="pub_date" property="pubDate" jdbcType="DATE" javaType="java.time.LocalDate" />
+        <result column="stat_date" property="statDate" jdbcType="DATE" javaType="java.time.LocalDate" />
+        <result column="dupont_roe" property="returnOfEquity" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+        <result column="dupont_asset_to_equity" property="assetToEquity" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+        <result column="dupont_asset_turn" property="assetTurn" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+        <result column="dupont_pni_to_ni" property="netProfitAttributableToShareHoldersOfTheParentCompanyToNetProfit" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+        <result column="dupont_ni_to_gr" property="netProfitToGrossRevenue" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+        <result column="dupont_tax_burden" property="taxBurden" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+        <result column="dupont_int_burden" property="intBurden" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+        <result column="dupont_ebit_to_gr" property="earningsBeforeInterestAndTaxToInterestToGrossRevenue" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+    </resultMap>
+    <select id="findAllDupontData" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.DupontDataObject" resultMap="dupontResultMap">
+        SELECT code, pub_date, stat_date, dupont_roe, dupont_asset_to_equity, dupont_asset_turn, dupont_pni_to_ni, dupont_ni_to_gr, dupont_tax_burden, dupont_int_burden, dupont_ebit_to_gr
+        FROM BAO_STOCK_DUPONT_DATA
+    </select>
+    <select id="findLatestDupontData" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.DupontDataObject" resultMap="dupontResultMap">
+        SELECT code, max(pub_date) pub_date
+        FROM BAO_STOCK_DUPONT_DATA
+        GROUP BY code
+    </select>
+    <insert id="insertDupontData" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.DupontDataObject">
+        INSERT INTO BAO_STOCK_DUPONT_DATA(code, pub_date, stat_date, dupont_roe, dupont_asset_to_equity, dupont_asset_turn, dupont_pni_to_ni, dupont_ni_to_gr, dupont_tax_burden, dupont_int_burden, dupont_ebit_to_gr)
+        VALUES (#{code}, #{pubDate}, #{statDate}, #{returnOfEquity}, #{assetToEquity}, #{assetTurn}, #{netProfitAttributableToShareHoldersOfTheParentCompanyToNetProfit}, #{netProfitToGrossRevenue}, #{taxBurden}, #{intBurden}, #{earningsBeforeInterestAndTaxToInterestToGrossRevenue})
+    </insert>
+</mapper>

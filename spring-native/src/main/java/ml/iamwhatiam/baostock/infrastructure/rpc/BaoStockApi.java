@@ -37,6 +37,62 @@ public interface BaoStockApi {
     QueryStockIndustryResponse queryStockIndustry(QueryStockIndustryRequest request);
 
     /**
+     * 指数（上证50/沪深300/中证500）成分股
+     * 通过API接口获取上证50/沪深300/中证500成分股信息，更新频率：每周一更新
+     * @param request 指数类型，可指定查询日期
+     * @return 成分股信息
+     */
+    QueryStockIndexResponse queryIndexStock(QueryStockIndexRequest request);
+
+    /**
+     * 季频盈利能力
+     * 通过API接口获取季频盈利能力信息，可以通过参数设置获取对应年份、季度数据，提供2007年至今数据
+     * @param request 股票代码，可指定年份和季度
+     * @return 收入及利润
+     */
+    QueryProfitDataResponse queryProfitData(QueryFinanceDataRequest request);
+
+    /**
+     * 季频营运能力
+     * 通过API接口获取季频营运能力信息，可以通过参数设置获取对应年份、季度数据，提供2007年至今数据
+     * @param request 股票代码，可指定年份和季度
+     * @return 应收账款、存货、流动资金周转信息
+     */
+    QueryOperationDataResponse queryOperationData(QueryFinanceDataRequest request);
+
+    /**
+     * 季频成长能力
+     * 通过API接口获取季频成长能力信息，可以通过参数设置获取对应年份、季度数据，提供2007年至今数据
+     * @param request 股票代码，可指定年份和季度
+     * @return 资产、利润增长信息
+     */
+    QueryGrowthDataResponse queryGrowthData(QueryFinanceDataRequest request);
+
+    /**
+     * 季频偿债能力
+     * 通过API接口获取季频偿债能力信息，可以通过参数设置获取对应年份、季度数据，提供2007年至今数据
+     * @param request 股票代码，可指定年份和季度
+     * @return 资产、负债信息
+     */
+    QueryBalanceDataResponse queryBalanceData(QueryFinanceDataRequest request);
+
+    /**
+     * 季频现金流量
+     * 通过API接口获取季频现金流量信息，可以通过参数设置获取对应年份、季度数据，提供2007年至今数据
+     * @param request 股票代码，可指定年份和季度
+     * @return 资产、现金流信息
+     */
+    QueryCashFlowDataResponse queryCashFlowData(QueryFinanceDataRequest request);
+
+    /**
+     * 季频杜邦指数
+     * 通过API接口获取季频杜邦指数信息，可以通过参数设置获取对应年份、季度数据，提供2007年至今数据
+     * @param request 股票代码，可指定年份和季度
+     * @return 杜邦指数信息
+     */
+    QueryDupontDataResponse queryDupontData(QueryFinanceDataRequest request);
+
+    /**
      * 获取历史A股K线数据:
      * 通过API接口获取A股历史交易数据，可以通过参数设置获取日k线、周k线、月k线，以及5分钟、15分钟、30分钟和60分钟k线数据，适合搭配均线数据进行选股和分析
      * @param request 必须指定股票代码，可指定开始日期和结束日期，可指定频率、复权类型

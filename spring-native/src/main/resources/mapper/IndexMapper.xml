@@ -1,0 +1,31 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ml.iamwhatiam.baostock.infrastructure.dao.IndexMapper">
+
+    <resultMap id="baseResultMap" type="ml.iamwhatiam.baostock.infrastructure.dao.StockIndexDataObject">
+        <result column="id" property="id" jdbcType="INTEGER" javaType="long" />
+        <result column="type" property="indexType" jdbcType="INTEGER" javaType="int" />
+        <result column="code" property="code" jdbcType="VARCHAR" javaType="string" />
+        <result column="code_name" property="codeName" jdbcType="VARCHAR" javaType="string" />
+        <result column="update_date" property="updateDate" jdbcType="DATE" javaType="java.time.LocalDate" />
+        <result column="inclusion_date" property="inclusionDate" jdbcType="DATE" javaType="java.time.LocalDate" />
+        <result column="exclusion_date" property="exclusionDate" jdbcType="DATE" javaType="java.time.LocalDate" />
+    </resultMap>
+    <select id="findAll" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.StockIndexDataObject" resultMap="baseResultMap">
+        SELECT id, type, code, code_name, update_date, inclusion_date, exclusion_date
+        FROM BAO_STOCK_INDEX
+    </select>
+
+    <insert id="insert" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.StockIndexDataObject">
+        INSERT INTO BAO_STOCK_INDEX(type, code, code_name, update_date, inclusion_date)
+        VALUES (#{indexType}, #{code}, #{codeName}, #{updateDate}, #{inclusionDate})
+    </insert>
+
+    <insert id="update" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.StockIndexDataObject">
+        UPDATE BAO_STOCK_INDEX
+        <set>
+            <if test="updateDate != null">update_date=#{updateDate},</if>
+            <if test="exclusionDate != null">exclusion_date=#{exclusionDate},</if>
+        </set>
+        WHERE id=#{id}
+    </insert>
+</mapper>

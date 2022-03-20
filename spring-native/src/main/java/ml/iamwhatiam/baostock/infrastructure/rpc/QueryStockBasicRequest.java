@@ -27,8 +27,8 @@ public class QueryStockBasicRequest extends BaoStockRequest {
 
     @Override
     String encode() {
-        return "query_stock_basic" + Constants.MESSAGE_SPLIT + userId + Constants.MESSAGE_SPLIT + ONE
-                + Constants.MESSAGE_SPLIT + Constants.BAOSTOCK_PER_PAGE_COUNT + Constants.MESSAGE_SPLIT + code
+        return "query_stock_basic" + Constants.MESSAGE_SPLIT + userId + Constants.MESSAGE_SPLIT + getCurPageNum()
+                + Constants.MESSAGE_SPLIT + getPerPageCount() + Constants.MESSAGE_SPLIT + code
                 + Constants.MESSAGE_SPLIT + codeName;
     }
 }

@@ -17,7 +17,29 @@ public final class ResultFactory {
             case Constants.MESSAGE_TYPE_QUERYSTOCKINDUSTRY_RESPONSE:
                     result = new QueryStockIndustryResponse(headerArray, bodyArray);
                     break;
-
+            case Constants.MESSAGE_TYPE_QUERYSZ50STOCKS_RESPONSE: // pass through
+            case Constants.MESSAGE_TYPE_QUERYHS300STOCKS_RESPONSE: // pass through
+            case Constants.MESSAGE_TYPE_QUERYZZ500STOCKS_RESPONSE:
+                    result = new QueryStockIndexResponse(headerArray, bodyArray);
+                    break;
+            case Constants.MESSAGE_TYPE_PROFITDATA_RESPONSE:
+                    result = new QueryProfitDataResponse(headerArray, bodyArray);
+                    break;
+            case Constants.MESSAGE_TYPE_OPERATIONDATA_RESPONSE:
+                    result = new QueryOperationDataResponse(headerArray, bodyArray);
+                    break;
+            case Constants.MESSAGE_TYPE_QUERYGROWTHDATA_RESPONSE:
+                    result = new QueryGrowthDataResponse(headerArray, bodyArray);
+                    break;
+            case Constants.MESSAGE_TYPE_QUERYBALANCEDATA_RESPONSE:
+                    result = new QueryBalanceDataResponse(headerArray, bodyArray);
+                    break;
+            case Constants.MESSAGE_TYPE_QUERYCASHFLOWDATA_RESPONSE:
+                    result = new QueryCashFlowDataResponse(headerArray, bodyArray);
+                    break;
+            case Constants.MESSAGE_TYPE_QUERYDUPONTDATA_RESPONSE:
+                    result = new QueryDupontDataResponse(headerArray, bodyArray);
+                    break;
             case Constants.MESSAGE_TYPE_GETKDATAPLUS_RESPONSE:
                     result = new QueryHistoryKDataPlusResponse(headerArray, bodyArray);
                     break;

@@ -15,22 +15,28 @@
         <java.version>17</java.version><!-- Java 11 and Java 17 are supported -->
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
+        <spring-boot.version>2.6.4</spring-boot.version>
         <spring-cloud.version>2021.0.1</spring-cloud.version>
+        <spring-native.version>0.11.3</spring-native.version>
+        <tomcat.version>9.0.58</tomcat.version><!-- property cannot be import! -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
 
     <dependencyManagement>
         <dependencies>
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter-parent</artifactId>
-                <version>2.6.3</version><!-- Spring Native 0.11.2 only supports Spring Boot 2.6.3 -->
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
+            <!-- Override third party jar provided by Spring Boot -->
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-dependencies</artifactId>
                 <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-parent</artifactId>
+                <version>${spring-boot.version}</version><!-- Spring Native 0.11.2 only supports Spring Boot 2.6.3 -->
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -87,10 +93,6 @@
 <!--        </dependency>-->
         <dependency>
             <groupId>io.netty</groupId>
-            <artifactId>netty-buffer</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.netty</groupId>
             <artifactId>netty-codec</artifactId>
         </dependency>
         <dependency>
@@ -112,6 +114,11 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.codehaus.janino</groupId>
+            <artifactId>janino</artifactId>
+            <version>3.0.11</version>
         </dependency>
 
         <dependency>

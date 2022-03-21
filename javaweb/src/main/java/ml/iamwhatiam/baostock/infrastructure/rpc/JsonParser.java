@@ -12,7 +12,7 @@ import java.util.List;
 
 public abstract class JsonParser {
 
-    private static ObjectMapper om = new ObjectMapper();
+    private static final ObjectMapper om = new ObjectMapper();
 
     static List<List<String>> parseRecord(String json) {
         if(json == null || json.length() == 0) {

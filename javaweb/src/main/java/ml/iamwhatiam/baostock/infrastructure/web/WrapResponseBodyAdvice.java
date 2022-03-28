@@ -2,7 +2,10 @@ package ml.iamwhatiam.baostock.infrastructure.web;
 
 import lombok.Getter;
 import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.MethodParameter;
+import org.springframework.core.env.AbstractEnvironment;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
@@ -14,7 +17,11 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 import java.io.Serializable;
 
 @ControllerAdvice
+@Slf4j
 public class WrapResponseBodyAdvice implements ResponseBodyAdvice {
+
+    @Value("${" + AbstractEnvironment.ACTIVE_PROFILES_PROPERTY_NAME +":}")
+    private String activeProfiles;
 
     @Override
     public boolean supports(MethodParameter returnType, Class converterType) {
@@ -37,7 +44,10 @@ public class WrapResponseBodyAdvice implements ResponseBodyAdvice {
     @ExceptionHandler
     @ResponseBody
     public Wrapper handleUnknownException(Throwable t) {
-        return new Wrapper(-1, t.getMessage(), null);
+        log.error(t.getMessage(), t);
+        return activeProfiles.contains("prod") ?
+                new Wrapper(-1, "server error", null) :
+                new Wrapper(-1, t.getMessage(), t);
     }
 
     @Getter

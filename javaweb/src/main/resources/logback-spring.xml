@@ -3,6 +3,7 @@
     <contextName>${spring.application.name}</contextName>
 
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <withJansi>true</withJansi>
         <encoder>
             <pattern>${logging.pattern.console}</pattern>
         </encoder>
@@ -14,7 +15,7 @@
             <fileNamePattern>${logging.file.path}/${logging.file.name}.%d{yyyy-MM-dd}.%i.gz</fileNamePattern>
             <maxFileSize>${logging.logback.rollingpolicy.max-file-size}</maxFileSize>
             <maxHistory>${logging.logback.rollingpolicy.max-history}</maxHistory>
-            <totalSizeCap>100GB</totalSizeCap>
+            <totalSizeCap>${logging.logback.rollingpolicy.total-size-cap}</totalSizeCap>
         </rollingPolicy>
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
             <pattern>${logging.pattern.file}</pattern>

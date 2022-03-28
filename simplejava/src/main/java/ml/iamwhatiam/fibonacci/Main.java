@@ -1,3 +1,5 @@
+package ml.iamwhatiam.fibonacci;
+
 public class Main {
 
     public static void main(String[] args) {
@@ -9,17 +11,23 @@ public class Main {
         if(gap < 2 || gap > 80) {
             throw new IllegalArgumentException("参数必须在2~80之间");
         }
-        long total  = fibonacci(gap);
+        int alg = 0;
+        if(args.length > 1) {
+            alg = Integer.parseInt(args[1]);
+        }
+        FibonacciSequence serial;
+        if(alg < 0) {
+            serial = new RecursiveAlgorithm();
+        } else if(alg > 0) {
+            serial = new MatrixAlgorithm();
+        } else {
+            serial = new LoopAlgorithm();
+        }
+        long total  = serial.gen(gap);
         // 80: 23416728348467685
         // 30: 832040
         System.out.println(total);
         System.out.println((System.nanoTime() - start) / 1000);
     }
 
-    private static long fibonacci(long gap) {
-        if(gap == 1L || gap == 2L) {
-            return 1L;
-        }
-        return fibonacci(gap - 1) + fibonacci(gap - 2);
-    }
 }

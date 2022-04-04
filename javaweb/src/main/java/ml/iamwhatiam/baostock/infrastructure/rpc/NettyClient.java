@@ -119,7 +119,13 @@ public class NettyClient {
     }
 
     public <T extends BaoStockResponse> T request(BaoStockRequest msg) {
-        return request(msg, DEFAULT_WAIT_TIME);
+        long readTimeout;
+        try {
+            readTimeout = Long.parseLong(System.getProperty("baostock.socket.readTimeout"));
+        } catch (Throwable ignore) {
+            readTimeout = DEFAULT_WAIT_TIME;
+        }
+        return request(msg, readTimeout);
     }
 
     public <T extends BaoStockResponse> T request(BaoStockRequest request, long awaitMs) {

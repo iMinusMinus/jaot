@@ -1,6 +1,6 @@
 <configuration>
     <property resource="application.properties" />
-    <include resource="org/springframework/boot/logging/logback/defaults.xml" />
+<!--    <include resource="org/springframework/boot/logging/logback/defaults.xml" />-->
     <contextName>${spring.application.name}</contextName>
 
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">

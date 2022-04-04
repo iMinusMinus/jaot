@@ -18,4 +18,6 @@ public class BaoStockProperties {
     private String password;
 
     private int updateInterval = 7;
+
+    private long sessionTimeout = 60 * 60 * 1000L;
 }

@@ -9,18 +9,14 @@ import ch.qos.logback.core.pattern.color.CyanCompositeConverter;
 import ch.qos.logback.core.pattern.color.GrayCompositeConverter;
 import ch.qos.logback.core.pattern.color.MagentaCompositeConverter;
 import io.netty.buffer.AbstractByteBufAllocator;
-import io.netty.buffer.AbstractReferenceCountedByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.handler.codec.ByteToMessageDecoder;
-import io.netty.handler.codec.DelimiterBasedFrameDecoder;
 import io.netty.handler.codec.MessageToByteEncoder;
-import io.netty.util.NettyRuntime;
 import io.netty.util.ReferenceCountUtil;
 import ml.iamwhatiam.baostock.infrastructure.rpc.NettyClient;
 import ml.iamwhatiam.baostock.infrastructure.rpc.QueryHistoryKDataPlusResponse;
@@ -76,9 +72,7 @@ import java.util.Locale;
         @TypeHint(typeNames = {
                 "io.netty.channel.DefaultChannelPipeline$HeadContext",
                 "io.netty.channel.DefaultChannelPipeline$TailContext",
-//                "io.netty.channel.ChannelHandlerMask$Skip"
         }, access = {TypeAccess.QUERY_DECLARED_METHODS}),
-//        @TypeHint(typeNames = "io.netty.channel.ChannelHandler$Sharable", access = TypeAccess.QUERY_DECLARED_METHODS),
         @TypeHint(types = ChannelHandlerAdapter.class,
                 queriedMethods = @MethodHint(name = "exceptionCaught", parameterTypes = {ChannelHandlerContext.class, Throwable.class})),
         @TypeHint(types = {
@@ -90,12 +84,8 @@ import java.util.Locale;
                 MessageToByteEncoder.class,
                 ReferenceCountUtil.class
         }, access = TypeAccess.QUERY_DECLARED_METHODS),
-//        @TypeHint(types = AbstractReferenceCountedByteBuf.class, fields = @FieldHint(name = "refCnt")),
         @TypeHint(types = {
                 PooledByteBufAllocator.class,
-//                DelimiterBasedFrameDecoder.class,
-//                NettyRuntime.class,
-//                Unpooled.class
         })})
 // mybatis. mapper file conversion should change to p/k/g/MapperInterface.xml, and mybatis-spring-native would automatically add mapper xml file as resource file.
 @MyBatisResourcesScan(typeAliasesPackages = "ml.iamwhatiam.baostock.infrastructure.dao", mapperLocationPatterns = "mapper/**/*Mapper.xml")
@@ -105,6 +95,8 @@ import java.util.Locale;
                 WrapResponseBodyAdvice.Wrapper.class,
                 StockVO.class,
                 QueryHistoryKDataPlusResponse.class,
+                QueryHistoryKDataPlusResponse.Quotation.class,
+                QueryHistoryKDataPlusResponse.Frequency.class,
                 StackTraceElement.class,
                 StackTraceElement[].class
         })

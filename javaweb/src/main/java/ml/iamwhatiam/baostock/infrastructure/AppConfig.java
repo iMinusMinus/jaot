@@ -7,12 +7,14 @@ import ml.iamwhatiam.baostock.infrastructure.rpc.BaoStockApi;
 import ml.iamwhatiam.baostock.infrastructure.rpc.BaoStockRequest;
 import ml.iamwhatiam.baostock.infrastructure.rpc.Constants;
 import ml.iamwhatiam.baostock.infrastructure.rpc.NettyClient;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.lang.reflect.Proxy;
 
 @Configuration(proxyBeanMethods = false)
+@EnableConfigurationProperties(value = {BaoStockProperties.class})
 public class AppConfig {
 
     @Bean

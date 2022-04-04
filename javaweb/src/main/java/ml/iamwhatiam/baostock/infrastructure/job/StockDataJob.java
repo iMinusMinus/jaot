@@ -2,6 +2,7 @@ package ml.iamwhatiam.baostock.infrastructure.job;
 
 import lombok.extern.slf4j.Slf4j;
 import ml.iamwhatiam.baostock.domain.StockIndexType;
+import ml.iamwhatiam.baostock.infrastructure.BaoStockProperties;
 import ml.iamwhatiam.baostock.infrastructure.dao.FinanceDataObject;
 import ml.iamwhatiam.baostock.infrastructure.dao.FinanceMapper;
 import ml.iamwhatiam.baostock.infrastructure.dao.IndexMapper;
@@ -30,7 +31,6 @@ import ml.iamwhatiam.baostock.infrastructure.rpc.QueryStockIndexRequest;
 import ml.iamwhatiam.baostock.infrastructure.rpc.QueryStockIndexResponse;
 import ml.iamwhatiam.baostock.infrastructure.rpc.QueryStockIndustryRequest;
 import ml.iamwhatiam.baostock.infrastructure.rpc.QueryStockIndustryResponse;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -53,14 +53,8 @@ public class StockDataJob {
     @Resource
     private BaoStockApi baoStockApi;
 
-    @Value("${userId}")
-    private String userId;
-
-    @Value("${password}")
-    private String password;
-
-    @Value("${basicData.updateInterval.day}")
-    private int updateIntervalDays;
+    @Resource
+    private BaoStockProperties baoStockProperties;
 
     @Resource
     private StockMapper stockMapper;
@@ -76,21 +70,24 @@ public class StockDataJob {
 
     private LocalDate lastSyncDate;
 
+    private String accessToken;
+
     @Scheduled(cron = "0 1 23 * * 1,2,3,4,5", zone = "Asia/Shanghai")
     public void updateStocks() {
         log.info("update stock basic info job start");
         // 虽然登录userId和后续访问鉴权相同，但未登录的请求会报“用户未登录”
-        LoginResponse loginResult = baoStockApi.login(new LoginRequest(userId, password));
+        LoginResponse loginResult = baoStockApi.login(new LoginRequest(baoStockProperties.getUserId(), baoStockProperties.getPassword()));
         if(!handleRemoteResult(Constants.MESSAGE_TYPE_LOGIN_REQUEST, loginResult)) {
             return;
         }
+        accessToken = loginResult.getUserId() != null && loginResult.getUserId().length() > 0 ? loginResult.getUserId() : baoStockProperties.getUserId();
         // 当天股市开市情况
-        QueryAllStockResponse stocks = baoStockApi.queryAllStock(new QueryAllStockRequest(userId));
+        QueryAllStockResponse stocks = baoStockApi.queryAllStock(new QueryAllStockRequest(accessToken));
         if(!handleRemoteResult(Constants.MESSAGE_TYPE_QUERYALLSTOCK_REQUEST, stocks)) {
             return;
         }
         List<String> stockCodes = stocks.getData().stream().map(QueryAllStockResponse.Stock::getCode).collect(Collectors.toList());
-        if(lastSyncDate == null || lastSyncDate.plusDays(updateIntervalDays).compareTo(LocalDate.now()) < 0) {
+        if(lastSyncDate == null || lastSyncDate.plusDays(baoStockProperties.getUpdateInterval()).compareTo(LocalDate.now()) < 0) {
             // 各股票上市、退市等信息
             mergeStockBasic(stockCodes);
             // 各股票行业信息
@@ -112,7 +109,7 @@ public class StockDataJob {
         Set<String> profitStockCodes = new HashSet<>(stocks);
         findMissingFinanceDataStock(profitStockCodes, financeMapper.findLatestProfitData());
         for(String stockCode : profitStockCodes) {
-            QueryProfitDataResponse response = baoStockApi.queryProfitData(new QueryFinanceDataRequest(userId, stockCode, QueryFinanceDataRequest.FinanceType.PROFIT));
+            QueryProfitDataResponse response = baoStockApi.queryProfitData(new QueryFinanceDataRequest(accessToken, stockCode, QueryFinanceDataRequest.FinanceType.PROFIT));
             if(!handleRemoteResult(QueryFinanceDataRequest.FinanceType.PROFIT.getMethod(), response)) {
                 continue;
             }
@@ -124,7 +121,7 @@ public class StockDataJob {
         Set<String> operationStockCodes = new HashSet<>(stocks);
         findMissingFinanceDataStock(operationStockCodes, financeMapper.findLatestOperationData());
         for(String stockCode : operationStockCodes) {
-            QueryOperationDataResponse response = baoStockApi.queryOperationData(new QueryFinanceDataRequest(userId, stockCode, QueryFinanceDataRequest.FinanceType.OPERATION));
+            QueryOperationDataResponse response = baoStockApi.queryOperationData(new QueryFinanceDataRequest(accessToken, stockCode, QueryFinanceDataRequest.FinanceType.OPERATION));
             if(!handleRemoteResult(QueryFinanceDataRequest.FinanceType.OPERATION.getMethod(), response)) {
                 continue;
             }
@@ -136,7 +133,7 @@ public class StockDataJob {
         Set<String> growthStockCodes = new HashSet<>(stocks);
         findMissingFinanceDataStock(growthStockCodes, financeMapper.findLatestGrowthData());
         for(String stockCode : growthStockCodes) {
-            QueryGrowthDataResponse response = baoStockApi.queryGrowthData(new QueryFinanceDataRequest(userId, stockCode, QueryFinanceDataRequest.FinanceType.GROWTH));
+            QueryGrowthDataResponse response = baoStockApi.queryGrowthData(new QueryFinanceDataRequest(accessToken, stockCode, QueryFinanceDataRequest.FinanceType.GROWTH));
             if(!handleRemoteResult(QueryFinanceDataRequest.FinanceType.GROWTH.getMethod(), response)) {
                 continue;
             }
@@ -148,7 +145,7 @@ public class StockDataJob {
         Set<String> balanceStockCodes = new HashSet<>(stocks);
         findMissingFinanceDataStock(balanceStockCodes, financeMapper.findLatestBalanceData());
         for(String stockCode : balanceStockCodes) {
-            QueryBalanceDataResponse response = baoStockApi.queryBalanceData(new QueryFinanceDataRequest(userId, stockCode, QueryFinanceDataRequest.FinanceType.BALANCE));
+            QueryBalanceDataResponse response = baoStockApi.queryBalanceData(new QueryFinanceDataRequest(accessToken, stockCode, QueryFinanceDataRequest.FinanceType.BALANCE));
             if(!handleRemoteResult(QueryFinanceDataRequest.FinanceType.BALANCE.getMethod(), response)) {
                 continue;
             }
@@ -160,7 +157,7 @@ public class StockDataJob {
         Set<String> cashFlowStockCodes = new HashSet<>(stocks);
         findMissingFinanceDataStock(cashFlowStockCodes, financeMapper.findLatestCashFlowData());
         for(String stockCode : cashFlowStockCodes) {
-            QueryCashFlowDataResponse response = baoStockApi.queryCashFlowData(new QueryFinanceDataRequest(userId, stockCode, QueryFinanceDataRequest.FinanceType.CASH_FLOW));
+            QueryCashFlowDataResponse response = baoStockApi.queryCashFlowData(new QueryFinanceDataRequest(accessToken, stockCode, QueryFinanceDataRequest.FinanceType.CASH_FLOW));
             if(!handleRemoteResult(QueryFinanceDataRequest.FinanceType.CASH_FLOW.getMethod(), response)) {
                 continue;
             }
@@ -172,7 +169,7 @@ public class StockDataJob {
         Set<String> dupontStockCodes = new HashSet<>(stocks);
         findMissingFinanceDataStock(dupontStockCodes, financeMapper.findLatestDupontData());
         for(String stockCode : dupontStockCodes) {
-            QueryDupontDataResponse response = baoStockApi.queryDupontData(new QueryFinanceDataRequest(userId, stockCode, QueryFinanceDataRequest.FinanceType.DUPONT));
+            QueryDupontDataResponse response = baoStockApi.queryDupontData(new QueryFinanceDataRequest(accessToken, stockCode, QueryFinanceDataRequest.FinanceType.DUPONT));
             if(!handleRemoteResult(QueryFinanceDataRequest.FinanceType.DUPONT.getMethod(), response)) {
                 continue;
             }
@@ -196,7 +193,7 @@ public class StockDataJob {
     }
 
     private void mergeStockIndex(StockIndexType indexType, List<StockIndexDataObject> indexes) {
-        QueryStockIndexResponse recent = baoStockApi.queryIndexStock(new QueryStockIndexRequest(userId, indexType));
+        QueryStockIndexResponse recent = baoStockApi.queryIndexStock(new QueryStockIndexRequest(accessToken, indexType));
         if(!handleRemoteResult(indexType.getMethod(), recent)) {
             return;
         }
@@ -235,7 +232,7 @@ public class StockDataJob {
     }
 
     private void mergeStockIndustryRelation() {
-        QueryStockIndustryResponse recent = baoStockApi.queryStockIndustry(new QueryStockIndustryRequest(userId));
+        QueryStockIndustryResponse recent = baoStockApi.queryStockIndustry(new QueryStockIndustryRequest(accessToken));
         if(!handleRemoteResult(Constants.MESSAGE_TYPE_QUERYSTOCKINDUSTRY_REQUEST, recent)) {
             return;
         }
@@ -275,7 +272,7 @@ public class StockDataJob {
     private void mergeStockBasic(List<String> stocks) {
         List<QueryStockBasicResponse.Stock> recent = new ArrayList<>();
         for(String stockCode : stocks) {
-            QueryStockBasicResponse stockBasic = baoStockApi.queryStockBasic(new QueryStockBasicRequest(userId, stockCode));
+            QueryStockBasicResponse stockBasic = baoStockApi.queryStockBasic(new QueryStockBasicRequest(accessToken, stockCode));
             if(!handleRemoteResult(Constants.MESSAGE_TYPE_QUERYSTOCKBASIC_REQUEST, stockBasic)) {
                 continue;
             }

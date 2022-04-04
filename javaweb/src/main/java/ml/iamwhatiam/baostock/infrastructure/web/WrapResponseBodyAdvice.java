@@ -44,7 +44,7 @@ public class WrapResponseBodyAdvice implements ResponseBodyAdvice {
     @ExceptionHandler
     @ResponseBody
     public Wrapper handleUnknownException(Throwable t) {
-        log.error(t.getMessage(), t);
+        log.error("uncaught exception: " + t.getMessage(), t);
         return activeProfiles.contains("prod") ?
                 new Wrapper(-1, "server error", null) :
                 new Wrapper(-1, t.getMessage(), t);

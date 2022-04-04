@@ -20,6 +20,8 @@
         <spring-cloud.version>2021.0.1</spring-cloud.version>
         <spring-native.version>0.11.3</spring-native.version>
         <tomcat.version>9.0.58</tomcat.version><!-- property cannot be import! -->
+        <mybatis-spring.version>2.2.2</mybatis-spring.version>
+        <mybatis-spring-native.version>0.1.0-SNAPSHOT</mybatis-spring-native.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
@@ -52,36 +54,37 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-<!--            <exclusions>-->
-<!--                <exclusion>-->
-<!--                    <groupId>org.apache.tomcat.embed</groupId>-->
-<!--                    <artifactId>tomcat-embed-core</artifactId>-->
-<!--                </exclusion>-->
-<!--                <exclusion>-->
-<!--                    <groupId>org.apache.tomcat.embed</groupId>-->
-<!--                    <artifactId>tomcat-embed-websocket</artifactId>-->
-<!--                </exclusion>-->
-<!--            </exclusions>-->
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.tomcat.embed</groupId>
+                    <artifactId>tomcat-embed-core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.tomcat.embed</groupId>
+                    <artifactId>tomcat-embed-websocket</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>org.apache.tomcat.experimental</groupId>-->
-<!--            <artifactId>tomcat-embed-programmatic</artifactId>-->
-<!--            <version>${tomcat.version}</version>-->
-<!--        </dependency>-->
+        <!-- Only Tomcat is supported for now. tomcat-embed-programmatic was used for optimized footprint -->
+        <dependency>
+            <groupId>org.apache.tomcat.experimental</groupId>
+            <artifactId>tomcat-embed-programmatic</artifactId>
+            <version>${tomcat.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
-<!--            <exclusions>-->
-<!--                <exclusion>-->
-<!--                    <groupId>io.micrometer</groupId>-->
-<!--                    <artifactId>micrometer-core</artifactId>-->
-<!--                </exclusion>-->
-<!--            </exclusions>-->
+            <exclusions>
+                <exclusion>
+                    <groupId>io.micrometer</groupId>
+                    <artifactId>micrometer-core</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.mybatis.spring.boot</groupId>
             <artifactId>mybatis-spring-boot-starter</artifactId>
-            <version>2.2.2</version>
+            <version>${mybatis-spring.version}</version>
         </dependency>
         <dependency>
             <groupId>com.zaxxer</groupId>
@@ -142,8 +145,25 @@
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
+            <artifactId>spring-boot-starter-test</artifactId><!-- Mockito is not yet supported -->
             <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mybatis.spring.native</groupId>
+            <artifactId>mybatis-spring-native-extensions</artifactId>
+            <version>${mybatis-spring-native.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.experimental</groupId>
+            <artifactId>spring-native</artifactId>
+            <version>${spring-native.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.experimental</groupId>
+            <artifactId>spring-aot</artifactId>
+            <version>${spring-native.version}</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 
@@ -155,6 +175,12 @@
                 <version>${spring-boot.version}</version>
                 <configuration>
                     <classifier>${repackage.classifier}</classifier><!-- Avoid a clash between Spring Boot repackaging and native-maven-plugin -->
+<!--                    <image>-->
+<!--                        <builder>paketobuildpacks/builder:tiny</builder>-->
+<!--                        <env>-->
+<!--                            <BP_NATIVE_IMAGE>true</BP_NATIVE_IMAGE>-->
+<!--                        </env>-->
+<!--                    </image>-->
                 </configuration>
                 <executions>
                     <execution>
@@ -164,7 +190,134 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <plugin>
+                <groupId>org.springframework.experimental</groupId>
+                <artifactId>spring-aot-maven-plugin</artifactId>
+                <version>${spring-native.version}</version>
+                <configuration>
+                    <removeXmlSupport>false</removeXmlSupport><!-- processing xml like logback -->
+                    <removeSpelSupport>true</removeSpelSupport><!-- DO NOT USE SpEL -->
+                    <removeYamlSupport>true</removeYamlSupport><!-- DO NOT USE YAML -->
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>generate</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>test-generate</id>
+                        <goals>
+                            <goal>test-generate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
+    <repositories>
+        <repository>
+            <id>spring-release</id>
+            <name>Spring release</name>
+            <url>https://repo.spring.io/release</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>spring-snapshots</id>
+            <name>Spring Snapshots</name>
+            <url>https://repo.spring.io/snapshot</url>
+        </repository>
+        <repository>
+            <id>sonatype-oss-snapshots</id>
+            <name>Sonatype OSS Snapshots Repository</name>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </repository>
+    </repositories>
+    <pluginRepositories>
+        <pluginRepository>
+            <id>spring-release</id>
+            <name>Spring release</name>
+            <url>https://repo.spring.io/release</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <profiles>
+        <profile>
+            <id>native</id>
+            <properties>
+                <repackage.classifier>exec</repackage.classifier>
+                <native-buildtools.version>0.9.10</native-buildtools.version>
+            </properties>
+            <dependencies>
+                <!-- Required with Maven Surefire 2.x -->
+                <dependency>
+                    <groupId>org.junit.platform</groupId>
+                    <artifactId>junit-platform-launcher</artifactId>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.graalvm.buildtools</groupId>
+                        <artifactId>native-maven-plugin</artifactId>
+                        <version>${native-buildtools.version}</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <buildArgs combine.children="append">
+                                <!-- spring-native default options -->
+                                --allow-incomplete-classpath
+                                --report-unsupported-elements-at-runtime
+                                --no-fallback
+                                --install-exit-handlers
+                                <!-- other options -->
+                                --verbose
+                                -H:+ReportExceptionStackTraces
+                                --initialize-at-build-time=ch.qos.logback.core
+                                <!--
+                                -H:+PrintAnalysisCallTree
+                                -H:Log=registerResource:3
+                                -H:ReportAnalysisForbiddenType=org.mybatis.spring.SqlSessionFactoryBean
+                                -->
+                                --trace-class-initialization=ml.iamwhatiam.baostock.infrastructure.job.StockDataJob
+                                --trace-object-instantiation=ml.iamwhatiam.baostock.infrastructure.dao.IndustryMapper
+                                <!-- analyse code size breakdown or heap size break down at https://www.graalvm.org/dashboard/ -->
+                                <!--
+                                -H:DashboardDump=stock -H:+DashboardAll
+                                -->
+                                <!-- system property -->
+                                -Duser.country=CN
+                                -Duser.language=zh
+                                -Dorg.graalvm.config=EE
+                            </buildArgs>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>test-native</id>
+                                <phase>test</phase>
+                                <goals>
+                                    <goal>test</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>build-native</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>build</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

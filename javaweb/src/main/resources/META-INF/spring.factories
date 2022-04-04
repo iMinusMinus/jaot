@@ -1,0 +1,4 @@
+org.springframework.nativex.type.NativeConfiguration=\
+ml.iamwhatiam.baostock.infrastructure.SpringNativeConfig
+org.springframework.aot.context.bootstrap.generator.bean.BeanRegistrationWriterSupplier=\
+org.springframework.aot.context.bootstrap.generator.bean.JakartaBeanRegistrationWriterSupplier

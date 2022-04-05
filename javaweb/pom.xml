@@ -20,6 +20,7 @@
         <spring-cloud.version>2021.0.1</spring-cloud.version>
         <spring-native.version>0.11.3</spring-native.version>
         <tomcat.version>9.0.58</tomcat.version><!-- property cannot be import! -->
+        <mybatis-spring.version>2.2.2</mybatis-spring.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
@@ -81,7 +82,7 @@
         <dependency>
             <groupId>org.mybatis.spring.boot</groupId>
             <artifactId>mybatis-spring-boot-starter</artifactId>
-            <version>2.2.2</version>
+            <version>${mybatis-spring.version}</version>
         </dependency>
         <dependency>
             <groupId>com.zaxxer</groupId>

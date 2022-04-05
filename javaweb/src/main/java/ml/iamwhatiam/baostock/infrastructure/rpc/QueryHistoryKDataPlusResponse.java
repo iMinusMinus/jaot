@@ -136,7 +136,7 @@ public class QueryHistoryKDataPlusResponse extends BaoStockResponse {
         /**
          * 成交量（累计 单位：股）
          */
-        private final int volume;
+        private final long volume;
 
         /**
          * 成交额（单位：人民币元）
@@ -203,7 +203,7 @@ public class QueryHistoryKDataPlusResponse extends BaoStockResponse {
             if(frequency == Frequency.DAY) {
                 preClose = new BigDecimal(data[index++]);
             }
-            volume = Integer.parseInt(data[index++]);
+            volume = Long.parseLong(data[index++]);
             amount = new BigDecimal(data[index++]);
             adjustflag = Integer.parseInt(data[index++]);
             if(frequency == Frequency.DAY || frequency == Frequency.WEEK || frequency == Frequency.MONTH) {

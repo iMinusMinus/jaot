@@ -1,5 +1,6 @@
 package ml.iamwhatiam.baostock.infrastructure.rpc;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -71,6 +72,7 @@ public class QueryHistoryKDataPlusResponse extends BaoStockResponse {
         ;
 
         @Getter
+        @JsonValue
         private final String frequency;
 
         Frequency(String frequency) {

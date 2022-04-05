@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,7 +13,7 @@ import java.util.List;
 
 public abstract class JsonParser {
 
-    private static final ObjectMapper om = new ObjectMapper();
+    private static final ObjectMapper om = new ObjectMapper().registerModule(new JavaTimeModule());
 
     static List<List<String>> parseRecord(String json) {
         if(json == null || json.length() == 0) {

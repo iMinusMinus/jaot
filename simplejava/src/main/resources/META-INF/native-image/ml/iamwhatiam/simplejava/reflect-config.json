@@ -1,0 +1,13 @@
+[
+{
+  "name":"ml.iamwhatiam.fibonacci.LoopAlgorithm",
+  "methods":[{"name":"<init>","parameterTypes":[] }]}
+,
+{
+    "name":"ml.iamwhatiam.fibonacci.MatrixAlgorithm",
+    "methods":[{"name":"<init>","parameterTypes":[] }]}
+,
+  {
+    "name":"ml.iamwhatiam.fibonacci.RecursiveAlgorithm",
+    "methods":[{"name":"<init>","parameterTypes":[] }]}
+]

@@ -38,12 +38,10 @@ import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -90,7 +88,7 @@ public class StockDataJob {
             return;
         }
         List<String> stockCodes = stocks.getData().stream().map(QueryAllStockResponse.Stock::getCode).collect(Collectors.toList());
-        if(lastSyncDate == null || lastSyncDate.plusDays(baoStockProperties.getUpdateInterval()).compareTo(LocalDate.now()) < 0) {
+        if(lastSyncDate == null || lastSyncDate.plusDays(baoStockProperties.getUpdateInterval()).isBefore(LocalDate.now())) {
             // 各股票上市、退市等信息
             mergeStockBasic(stockCodes);
             // 各股票行业信息
@@ -102,7 +100,7 @@ public class StockDataJob {
                 mergeStockIndex(indexType, indexes.stream().filter(t->t.getIndexType() == indexType.getValue()).collect(Collectors.toList()));
             }
             // 季频信息
-            Map<String, LocalDate> stockDataObjects = stockMapper.findAll().stream().collect(Collectors.toMap(k -> k.getCode(), v -> v.getIpoDate()));
+            Map<String, LocalDate> stockDataObjects = stockMapper.findAll().stream().collect(Collectors.toMap(StockDataObject::getCode, StockDataObject::getIpoDate));
             addSeasonReportIfNecessary(stockDataObjects);
         }
         lastSyncDate = LocalDate.now();
@@ -116,13 +114,13 @@ public class StockDataJob {
             LocalDate queryFrom = stock.getValue();
             while (queryFrom.isBefore(LocalDate.now())) {
                 QueryProfitDataResponse response = baoStockApi.queryProfitData(new QueryFinanceDataRequest(accessToken, stock.getKey(), queryFrom, QueryFinanceDataRequest.FinanceType.PROFIT));
+                queryFrom = queryFrom.plusMonths(MONTHS_PER_SEASON);
                 if(!handleRemoteResult(QueryFinanceDataRequest.FinanceType.PROFIT.getMethod(), response)) {
                     continue;
                 }
                 for(QueryProfitDataResponse.Profit profitToAdd : response.getData()) {
                     financeMapper.insertProfitData(FinanceAssembler.convertProfit(profitToAdd));
                 }
-                queryFrom = queryFrom.plusMonths(MONTHS_PER_SEASON);
             }
         }
 
@@ -132,13 +130,13 @@ public class StockDataJob {
             LocalDate queryFrom = stock.getValue();
             while (queryFrom.isBefore(LocalDate.now())) {
                 QueryOperationDataResponse response = baoStockApi.queryOperationData(new QueryFinanceDataRequest(accessToken, stock.getKey(), queryFrom, QueryFinanceDataRequest.FinanceType.OPERATION));
+                queryFrom = queryFrom.plusMonths(MONTHS_PER_SEASON);
                 if(!handleRemoteResult(QueryFinanceDataRequest.FinanceType.OPERATION.getMethod(), response)) {
                     continue;
                 }
                 for(QueryOperationDataResponse.Operation operationToAdd : response.getData()) {
                     financeMapper.insertOperationData(FinanceAssembler.convertOperation(operationToAdd));
                 }
-                queryFrom = queryFrom.plusMonths(MONTHS_PER_SEASON);
             }
         }
 
@@ -148,13 +146,13 @@ public class StockDataJob {
             LocalDate queryFrom = stock.getValue();
             while (queryFrom.isBefore(LocalDate.now())) {
                 QueryGrowthDataResponse response = baoStockApi.queryGrowthData(new QueryFinanceDataRequest(accessToken, stock.getKey(), queryFrom, QueryFinanceDataRequest.FinanceType.GROWTH));
+                queryFrom = queryFrom.plusMonths(MONTHS_PER_SEASON);
                 if(!handleRemoteResult(QueryFinanceDataRequest.FinanceType.GROWTH.getMethod(), response)) {
                     continue;
                 }
                 for(QueryGrowthDataResponse.Growth growthToAdd : response.getData()) {
                     financeMapper.insertGrowthData(FinanceAssembler.convertGrowth(growthToAdd));
                 }
-                queryFrom = queryFrom.plusMonths(MONTHS_PER_SEASON);
             }
         }
 
@@ -164,13 +162,13 @@ public class StockDataJob {
             LocalDate queryFrom = stock.getValue();
             while (queryFrom.isBefore(LocalDate.now())) {
                 QueryBalanceDataResponse response = baoStockApi.queryBalanceData(new QueryFinanceDataRequest(accessToken, stock.getKey(), queryFrom, QueryFinanceDataRequest.FinanceType.BALANCE));
+                queryFrom = queryFrom.plusMonths(MONTHS_PER_SEASON);
                 if(!handleRemoteResult(QueryFinanceDataRequest.FinanceType.BALANCE.getMethod(), response)) {
                     continue;
                 }
                 for(QueryBalanceDataResponse.Balance balanceToAdd : response.getData()) {
                     financeMapper.insertBalanceData(FinanceAssembler.convertBalance(balanceToAdd));
                 }
-                queryFrom = queryFrom.plusMonths(MONTHS_PER_SEASON);
             }
         }
 
@@ -180,13 +178,13 @@ public class StockDataJob {
             LocalDate queryFrom = stock.getValue();
             while (queryFrom.isBefore(LocalDate.now())) {
                 QueryCashFlowDataResponse response = baoStockApi.queryCashFlowData(new QueryFinanceDataRequest(accessToken, stock.getKey(), queryFrom, QueryFinanceDataRequest.FinanceType.CASH_FLOW));
+                queryFrom = queryFrom.plusMonths(MONTHS_PER_SEASON);
                 if(!handleRemoteResult(QueryFinanceDataRequest.FinanceType.CASH_FLOW.getMethod(), response)) {
                     continue;
                 }
                 for(QueryCashFlowDataResponse.CashFlow cashFlowToAdd : response.getData()) {
                     financeMapper.insertCashFlowData(FinanceAssembler.convertCashFlow(cashFlowToAdd));
                 }
-                queryFrom = queryFrom.plusMonths(MONTHS_PER_SEASON);
             }
         }
 
@@ -196,13 +194,13 @@ public class StockDataJob {
             LocalDate queryFrom = stock.getValue();
             while (queryFrom.isBefore(LocalDate.now())) {
                 QueryDupontDataResponse response = baoStockApi.queryDupontData(new QueryFinanceDataRequest(accessToken, stock.getKey(), queryFrom, QueryFinanceDataRequest.FinanceType.DUPONT));
+                queryFrom = queryFrom.plusMonths(MONTHS_PER_SEASON);
                 if(!handleRemoteResult(QueryFinanceDataRequest.FinanceType.DUPONT.getMethod(), response)) {
                     continue;
                 }
                 for(QueryDupontDataResponse.Dupont dupontToAdd : response.getData()) {
                     financeMapper.insertDupontData(FinanceAssembler.convertDupont(dupontToAdd));
                 }
-                queryFrom = queryFrom.plusMonths(MONTHS_PER_SEASON);
             }
         }
     }
@@ -228,14 +226,15 @@ public class StockDataJob {
             queryFrom = indexes.get(0).getUpdateDate();
         }
         if(queryFrom.plusMonths(indexType.getFrequency()).isAfter(LocalDate.now())) {
-            log.info("{} last update date []", indexType.getMethod(), queryFrom);
+            log.info("{} last update date [{}]", indexType.getMethod(), queryFrom);
             return;
         }
 
         while(queryFrom.isBefore(LocalDate.now())) {
             QueryStockIndexResponse recent = baoStockApi.queryIndexStock(new QueryStockIndexRequest(accessToken, indexType, queryFrom));
+            queryFrom = queryFrom.plusMonths(indexType.getFrequency());
             if(!handleRemoteResult(indexType.getMethod(), recent)) {
-                return;
+                continue;
             }
             Map<String, StockIndexDataObject> old = indexes.stream()
                     .filter(t -> t.getExclusionDate() == null) // 存在多次纳入/退出指数
@@ -259,18 +258,16 @@ public class StockDataJob {
                     indexMapper.update(changed);
                 }
             }
-            if(old.size() == handled.size()) {
-                return;
+            if(old.size() != handled.size()) {
+                old.values().removeAll(handled);
+                for(StockIndexDataObject stockIndexDataObject : old.values()) {
+                    StockIndexDataObject exclude = new StockIndexDataObject();
+                    exclude.setId(stockIndexDataObject.getId());
+                    exclude.setExclusionDate(LocalDate.now()); // XXX 存在时间误差
+                    exclude.setUpdateDate(LocalDate.now());
+                    indexMapper.update(exclude);
+                }
             }
-            old.values().removeAll(handled);
-            for(StockIndexDataObject stockIndexDataObject : old.values()) {
-                StockIndexDataObject exclude = new StockIndexDataObject();
-                exclude.setId(stockIndexDataObject.getId());
-                exclude.setExclusionDate(LocalDate.now()); // XXX 存在时间误差
-                exclude.setUpdateDate(LocalDate.now());
-                indexMapper.update(exclude);
-            }
-            queryFrom = queryFrom.plusMonths(indexType.getFrequency());
         }
     }
 

@@ -17,14 +17,22 @@
 
     <insert id="insert" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.StockIndexDataObject">
         INSERT INTO BAO_STOCK_INDEX(type, code, code_name, update_date, inclusion_date)
-        VALUES (#{indexType}, #{code}, #{codeName}, #{updateDate}, #{inclusionDate})
+        VALUES (#{indexType}, #{code}, #{codeName,jdbcType=VARCHAR}, #{updateDate}, #{inclusionDate,jdbcType=DATE})
+    </insert>
+
+    <insert id="insert" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.StockIndexDataObject" databaseId="oracle">
+        <selectKey keyProperty="id" order="BEFORE" resultType="long">
+        SELECT SEQ_BAO_STOCK_INDEX.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO BAO_STOCK_INDEX(id, type, code, code_name, update_date, inclusion_date)
+        VALUES (#{id}, #{indexType}, #{code}, #{codeName,jdbcType=VARCHAR}, #{updateDate}, #{inclusionDate,jdbcType=DATE})
     </insert>
 
     <insert id="update" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.StockIndexDataObject">
         UPDATE BAO_STOCK_INDEX
         <set>
             <if test="updateDate != null">update_date=#{updateDate},</if>
-            <if test="exclusionDate != null">exclusion_date=#{exclusionDate},</if>
+            <if test="exclusionDate != null">exclusion_date=#{exclusionDate,jdbcType=DATE},</if>
         </set>
         WHERE id=#{id}
     </insert>

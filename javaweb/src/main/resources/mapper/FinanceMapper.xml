@@ -25,7 +25,14 @@
     </select>
     <insert id="insertProfitData" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.ProfitDataObject">
         INSERT INTO BAO_STOCK_PROFIT_DATA(code, pub_date, stat_date, roe_avg, np_margin, gp_margin, net_profit, eps_ttm, mb_revenue, total_share, liqa_share)
-        VALUES (#{code}, #{pubDate}, #{statDate}, #{roeAvg}, #{netProfitMargin}, #{grossProfitMargin}, #{netProfit}, #{earningsPerShareTimeToMarket}, #{primaryBusinessRevenue}, #{totalShare}, #{tradableShare})
+        VALUES (#{code}, #{pubDate}, #{statDate}, #{roeAvg,jdbcType=NUMERIC}, #{netProfitMargin,jdbcType=NUMERIC}, #{grossProfitMargin,jdbcType=NUMERIC}, #{netProfit,jdbcType=NUMERIC}, #{earningsPerShareTimeToMarket,jdbcType=NUMERIC}, #{primaryBusinessRevenue,jdbcType=NUMERIC}, #{totalShare,jdbcType=NUMERIC}, #{tradableShare,jdbcType=NUMERIC})
+    </insert>
+    <insert id="insertProfitData" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.ProfitDataObject" databaseId="oracle">
+        <selectKey keyProperty="id" order="BEFORE" resultType="long">
+            SELECT SEQ_BAO_STOCK_PROFIT_DATA.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO BAO_STOCK_PROFIT_DATA(id, code, pub_date, stat_date, roe_avg, np_margin, gp_margin, net_profit, eps_ttm, mb_revenue, total_share, liqa_share)
+        VALUES (#{id}, #{code}, #{pubDate}, #{statDate}, #{roeAvg,jdbcType=NUMERIC}, #{netProfitMargin,jdbcType=NUMERIC}, #{grossProfitMargin,jdbcType=NUMERIC}, #{netProfit,jdbcType=NUMERIC}, #{earningsPerShareTimeToMarket,jdbcType=NUMERIC}, #{primaryBusinessRevenue,jdbcType=NUMERIC}, #{totalShare,jdbcType=NUMERIC}, #{tradableShare,jdbcType=NUMERIC})
     </insert>
 
     <resultMap id="operationResultMap" type="ml.iamwhatiam.baostock.infrastructure.dao.OperationDataObject">
@@ -50,7 +57,14 @@
     </select>
     <insert id="insertOperationData" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.OperationDataObject">
         INSERT INTO BAO_STOCK_OPERATION_DATA(code, pub_date, stat_date, nr_turn_ratio, nr_turn_days, inv_turn_ratio, inv_turn_days, ca_turn_ratio, asset_turn_ratio)
-        VALUES (#{code}, #{pubDate}, #{statDate}, #{noteReceiveTurnRatio}, #{noteReceiveTurnDays}, #{inventoryTurnRatio}, #{inventoryTurnDays}, #{currentAssetTurnRatio}, #{assetTurnRatio})
+        VALUES (#{code}, #{pubDate}, #{statDate}, #{noteReceiveTurnRatio,jdbcType=NUMERIC}, #{noteReceiveTurnDays,jdbcType=NUMERIC}, #{inventoryTurnRatio,jdbcType=NUMERIC}, #{inventoryTurnDays,jdbcType=NUMERIC}, #{currentAssetTurnRatio,jdbcType=NUMERIC}, #{assetTurnRatio,jdbcType=NUMERIC})
+    </insert>
+    <insert id="insertOperationData" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.OperationDataObject" databaseId="oracle">
+        <selectKey keyProperty="id" order="BEFORE" resultType="long">
+            SELECT SEQ_BAO_STOCK_OPERATION_DATA.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO BAO_STOCK_OPERATION_DATA(id, code, pub_date, stat_date, nr_turn_ratio, nr_turn_days, inv_turn_ratio, inv_turn_days, ca_turn_ratio, asset_turn_ratio)
+        VALUES (#{id}, #{code}, #{pubDate}, #{statDate}, #{noteReceiveTurnRatio,jdbcType=NUMERIC}, #{noteReceiveTurnDays,jdbcType=NUMERIC}, #{inventoryTurnRatio,jdbcType=NUMERIC}, #{inventoryTurnDays,jdbcType=NUMERIC}, #{currentAssetTurnRatio,jdbcType=NUMERIC}, #{assetTurnRatio,jdbcType=NUMERIC})
     </insert>
 
     <resultMap id="growthResultMap" type="ml.iamwhatiam.baostock.infrastructure.dao.GrowthDataObject">
@@ -74,7 +88,14 @@
     </select>
     <insert id="insertGrowthData" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.GrowthDataObject">
         INSERT INTO BAO_STOCK_GROWTH_DATA(code, pub_date, stat_date, yoy_equity, yoy_asset, yoy_ni, yoy_eps_basic, yoy_pni)
-        VALUES (#{code}, #{pubDate}, #{statDate}, #{yearOverYearEquity}, #{yearOverYearAsset}, #{yearOverYearNetProfit}, #{yearOverYearEarningsPerShareBasic}, #{yearOverYearNetProfitAttributableToShareHoldersOfTheParentCompany})
+        VALUES (#{code}, #{pubDate}, #{statDate}, #{yearOverYearEquity,jdbcType=NUMERIC}, #{yearOverYearAsset,jdbcType=NUMERIC}, #{yearOverYearNetProfit,jdbcType=NUMERIC}, #{yearOverYearEarningsPerShareBasic,jdbcType=NUMERIC}, #{yearOverYearNetProfitAttributableToShareHoldersOfTheParentCompany,jdbcType=NUMERIC})
+    </insert>
+    <insert id="insertGrowthData" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.GrowthDataObject" databaseId="oracle">
+        <selectKey keyProperty="id" order="BEFORE" resultType="long">
+            SELECT SEQ_BAO_STOCK_GROWTH_DATA.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO BAO_STOCK_GROWTH_DATA(id, code, pub_date, stat_date, yoy_equity, yoy_asset, yoy_ni, yoy_eps_basic, yoy_pni)
+        VALUES (#{id}, #{code}, #{pubDate}, #{statDate}, #{yearOverYearEquity,jdbcType=NUMERIC}, #{yearOverYearAsset,jdbcType=NUMERIC}, #{yearOverYearNetProfit,jdbcType=NUMERIC}, #{yearOverYearEarningsPerShareBasic,jdbcType=NUMERIC}, #{yearOverYearNetProfitAttributableToShareHoldersOfTheParentCompany,jdbcType=NUMERIC})
     </insert>
 
     <resultMap id="balanceResultMap" type="ml.iamwhatiam.baostock.infrastructure.dao.BalanceDataObject">
@@ -99,7 +120,14 @@
     </select>
     <insert id="insertBalanceData" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.BalanceDataObject">
         INSERT INTO BAO_STOCK_BALANCE_DATA(code, pub_date, stat_date, current_ratio, quick_ratio, cash_ratio, yoy_liability, liability_to_asset, asset_to_equity)
-        VALUES (#{code}, #{pubDate}, #{statDate}, #{currentRatio}, #{quickRatio}, #{cashRatio}, #{yearOverYearLiability}, #{liabilityToAsset}, #{assetToEquity})
+        VALUES (#{code}, #{pubDate}, #{statDate}, #{currentRatio,jdbcType=NUMERIC}, #{quickRatio,jdbcType=NUMERIC}, #{cashRatio,jdbcType=NUMERIC}, #{yearOverYearLiability,jdbcType=NUMERIC}, #{liabilityToAsset,jdbcType=NUMERIC}, #{assetToEquity,jdbcType=NUMERIC})
+    </insert>
+    <insert id="insertBalanceData" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.BalanceDataObject" databaseId="oracle">
+        <selectKey keyProperty="id" order="BEFORE" resultType="long">
+            SELECT SEQ_BAO_STOCK_BALANCE_DATA.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO BAO_STOCK_BALANCE_DATA(id, code, pub_date, stat_date, current_ratio, quick_ratio, cash_ratio, yoy_liability, liability_to_asset, asset_to_equity)
+        VALUES (#{id}, #{code}, #{pubDate}, #{statDate}, #{currentRatio,jdbcType=NUMERIC}, #{quickRatio,jdbcType=NUMERIC}, #{cashRatio,jdbcType=NUMERIC}, #{yearOverYearLiability,jdbcType=NUMERIC}, #{liabilityToAsset,jdbcType=NUMERIC}, #{assetToEquity,jdbcType=NUMERIC})
     </insert>
 
     <resultMap id="cashFlowResultMap" type="ml.iamwhatiam.baostock.infrastructure.dao.CashFlowDataObject">
@@ -125,7 +153,14 @@
     </select>
     <insert id="insertCashFlowData" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.CashFlowDataObject">
         INSERT INTO BAO_STOCK_CASH_FLOW_DATA(code, pub_date, stat_date, ca_to_asset, nca_to_asset, tangible_asset_to_asset, ebit_to_interest, cfo_to_or, cfo_to_np, cfo_to_gr)
-        VALUES (#{code}, #{pubDate}, #{statDate}, #{currentAssetToAsset}, #{nonCurrentAssetToAsset}, #{tangibleAssetToAsset}, #{operationalCashFlowToOperationalRevenue}, #{operationalCashFlowToOperationalRevenue}, #{operationalCashFlowToNetProfit}, #{operationalCashFlowToGrossRevenue})
+        VALUES (#{code}, #{pubDate}, #{statDate}, #{currentAssetToAsset,jdbcType=NUMERIC}, #{nonCurrentAssetToAsset,jdbcType=NUMERIC}, #{tangibleAssetToAsset,jdbcType=NUMERIC}, #{operationalCashFlowToOperationalRevenue,jdbcType=NUMERIC}, #{operationalCashFlowToOperationalRevenue,jdbcType=NUMERIC}, #{operationalCashFlowToNetProfit,jdbcType=NUMERIC}, #{operationalCashFlowToGrossRevenue,jdbcType=NUMERIC})
+    </insert>
+    <insert id="insertCashFlowData" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.CashFlowDataObject" databaseId="oracle">
+        <selectKey keyProperty="id" order="BEFORE" resultType="long">
+            SELECT SEQ_BAO_STOCK_CASH_FLOW_DATA.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO BAO_STOCK_CASH_FLOW_DATA(id, code, pub_date, stat_date, ca_to_asset, nca_to_asset, tangible_asset_to_asset, ebit_to_interest, cfo_to_or, cfo_to_np, cfo_to_gr)
+        VALUES (#{id}, #{code}, #{pubDate}, #{statDate}, #{currentAssetToAsset,jdbcType=NUMERIC}, #{nonCurrentAssetToAsset,jdbcType=NUMERIC}, #{tangibleAssetToAsset,jdbcType=NUMERIC}, #{operationalCashFlowToOperationalRevenue,jdbcType=NUMERIC}, #{operationalCashFlowToOperationalRevenue,jdbcType=NUMERIC}, #{operationalCashFlowToNetProfit,jdbcType=NUMERIC}, #{operationalCashFlowToGrossRevenue,jdbcType=NUMERIC})
     </insert>
 
     <resultMap id="dupontResultMap" type="ml.iamwhatiam.baostock.infrastructure.dao.DupontDataObject">
@@ -152,6 +187,13 @@
     </select>
     <insert id="insertDupontData" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.DupontDataObject">
         INSERT INTO BAO_STOCK_DUPONT_DATA(code, pub_date, stat_date, dupont_roe, dupont_asset_to_equity, dupont_asset_turn, dupont_pni_to_ni, dupont_ni_to_gr, dupont_tax_burden, dupont_int_burden, dupont_ebit_to_gr)
-        VALUES (#{code}, #{pubDate}, #{statDate}, #{returnOfEquity}, #{assetToEquity}, #{assetTurn}, #{netProfitAttributableToShareHoldersOfTheParentCompanyToNetProfit}, #{netProfitToGrossRevenue}, #{taxBurden}, #{intBurden}, #{earningsBeforeInterestAndTaxToInterestToGrossRevenue})
+        VALUES (#{code}, #{pubDate}, #{statDate}, #{returnOfEquity,jdbcType=NUMERIC}, #{assetToEquity,jdbcType=NUMERIC}, #{assetTurn,jdbcType=NUMERIC}, #{netProfitAttributableToShareHoldersOfTheParentCompanyToNetProfit,jdbcType=NUMERIC}, #{netProfitToGrossRevenue,jdbcType=NUMERIC}, #{taxBurden,jdbcType=NUMERIC}, #{intBurden,jdbcType=NUMERIC}, #{earningsBeforeInterestAndTaxToInterestToGrossRevenue,jdbcType=NUMERIC})
+    </insert>
+    <insert id="insertDupontData" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.DupontDataObject" databaseId="oracle">
+        <selectKey keyProperty="id" order="BEFORE" resultType="long">
+            SELECT SEQ_BAO_STOCK_DUPONT_DATA.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO BAO_STOCK_DUPONT_DATA(id, code, pub_date, stat_date, dupont_roe, dupont_asset_to_equity, dupont_asset_turn, dupont_pni_to_ni, dupont_ni_to_gr, dupont_tax_burden, dupont_int_burden, dupont_ebit_to_gr)
+        VALUES (#{id}, #{code}, #{pubDate}, #{statDate}, #{returnOfEquity,jdbcType=NUMERIC}, #{assetToEquity,jdbcType=NUMERIC}, #{assetTurn,jdbcType=NUMERIC}, #{netProfitAttributableToShareHoldersOfTheParentCompanyToNetProfit,jdbcType=NUMERIC}, #{netProfitToGrossRevenue,jdbcType=NUMERIC}, #{taxBurden,jdbcType=NUMERIC}, #{intBurden,jdbcType=NUMERIC}, #{earningsBeforeInterestAndTaxToInterestToGrossRevenue,jdbcType=NUMERIC})
     </insert>
 </mapper>

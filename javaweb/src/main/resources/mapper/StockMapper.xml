@@ -16,14 +16,14 @@
 
     <insert id="insert" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.StockDataObject">
         INSERT INTO BAO_STOCK_BASIC(code, code_name, ipo_date, out_date, type, status)
-        VALUES (#{code}, #{codeName}, #{ipoDate}, #{outDate}, #{type}, #{status})
+        VALUES (#{code}, #{codeName,jdbcType=VARCHAR}, #{ipoDate}, #{outDate,jdbcType=DATE}, #{type}, #{status})
     </insert>
 
     <insert id="update" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.StockDataObject">
         UPDATE BAO_STOCK_BASIC
          <set>
-               <if test="codeName != null">code_name=#{codeName},</if>
-               <if test="outDate != null">out_date=#{outDate},</if>
+               <if test="codeName != null">code_name=#{codeName,jdbcType=VARCHAR},</if>
+               <if test="outDate != null">out_date=#{outDate,jdbcType=DATE},</if>
                <if test="type != null">type=#{type},</if>
                <if test="status != null">status=#{status},</if>
          </set>

@@ -99,8 +99,10 @@ public class StockDataJob {
             for(StockIndexType indexType : StockIndexType.values()) {
                 mergeStockIndex(indexType, indexes.stream().filter(t->t.getIndexType() == indexType.getValue()).collect(Collectors.toList()));
             }
-            // 季频信息
-            Map<String, LocalDate> stockDataObjects = stockMapper.findAll().stream().collect(Collectors.toMap(StockDataObject::getCode, StockDataObject::getIpoDate));
+            // 季频信息(正常交易且是股票，不是指数等类型时，才有季频信息)
+            Map<String, LocalDate> stockDataObjects = stockMapper.findAll().stream()
+                    .filter(t -> Integer.valueOf(1).equals(t.getStatus()) && Integer.valueOf(1).equals(t.getType()))
+                    .collect(Collectors.toMap(StockDataObject::getCode, StockDataObject::getIpoDate));
             addSeasonReportIfNecessary(stockDataObjects);
         }
         lastSyncDate = LocalDate.now();
@@ -230,13 +232,14 @@ public class StockDataJob {
             return;
         }
 
+        List<StockIndexDataObject> recentAdded = new ArrayList<>(indexes);
         while(queryFrom.isBefore(LocalDate.now())) {
             QueryStockIndexResponse recent = baoStockApi.queryIndexStock(new QueryStockIndexRequest(accessToken, indexType, queryFrom));
             queryFrom = queryFrom.plusMonths(indexType.getFrequency());
             if(!handleRemoteResult(indexType.getMethod(), recent)) {
                 continue;
             }
-            Map<String, StockIndexDataObject> old = indexes.stream()
+            Map<String, StockIndexDataObject> old = recentAdded.stream()
                     .filter(t -> t.getExclusionDate() == null) // 存在多次纳入/退出指数
                     .collect(Collectors.toMap(StockIndexDataObject::getCode, Function.identity()));
             List<StockIndexDataObject> handled = new ArrayList<>();
@@ -250,21 +253,25 @@ public class StockDataJob {
                     index.setUpdateDate(stockIndex.getUpdateDate());
                     index.setInclusionDate(stockIndex.getUpdateDate());
                     indexMapper.insert(index);
+                    recentAdded.add(index);
                 } else {
                     handled.add(exist);
                     StockIndexDataObject changed = new StockIndexDataObject();
                     changed.setId(exist.getId());
-                    changed.setUpdateDate(exist.getUpdateDate());
+                    changed.setUpdateDate(stockIndex.getUpdateDate());
                     indexMapper.update(changed);
                 }
             }
+            // 1. 基础数据为空，不做任何处理; 2. 上个周期指数股数据存在，更新日期为查询日期，并从指数列表清除
             if(old.size() != handled.size()) {
                 old.values().removeAll(handled);
                 for(StockIndexDataObject stockIndexDataObject : old.values()) {
                     StockIndexDataObject exclude = new StockIndexDataObject();
                     exclude.setId(stockIndexDataObject.getId());
-                    exclude.setExclusionDate(LocalDate.now()); // XXX 存在时间误差
-                    exclude.setUpdateDate(LocalDate.now());
+                    exclude.setExclusionDate(queryFrom.minusMonths(indexType.getFrequency())); // XXX 存在时间误差
+                    exclude.setUpdateDate(queryFrom.minusMonths(indexType.getFrequency()));
+                    recentAdded.remove(stockIndexDataObject);
+                    stockIndexDataObject.setExclusionDate(exclude.getExclusionDate());
                     indexMapper.update(exclude);
                 }
             }

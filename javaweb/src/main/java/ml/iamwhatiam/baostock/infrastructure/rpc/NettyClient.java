@@ -41,8 +41,6 @@ public class NettyClient {
 
     private final static boolean epoll;
 
-    private final static int DEFAULT_SHARE_CONNECTIONS = 1;
-
     private final static String SERVER_TIME_OUT = "server timeout";
 
     private final static String CLIENT_TIME_OUT = "client timeout";
@@ -55,13 +53,13 @@ public class NettyClient {
 
     private static long defaultReadTimeout;
 
-    private static int defaultShareConnections;
-
     private final String host;
 
     private final int port;
 
     private final boolean secure;
+
+    private final int sharedConnections;
 
     private Bootstrap bootstrap;
 
@@ -74,18 +72,14 @@ public class NettyClient {
         } catch (Throwable ignore) {
             defaultReadTimeout = DEFAULT_WAIT_TIME;
         }
-        try {
-            defaultShareConnections = Integer.parseInt(System.getProperty("baostock.socket.connections"));
-        } catch (Exception ignore) {
-            defaultShareConnections = DEFAULT_SHARE_CONNECTIONS;
-        }
     }
 
-    public NettyClient(String host, int port, boolean secure) {
+    public NettyClient(String host, int port, boolean secure, int sharedConnections) {
         this.host = host;
         this.port = port;
         this.secure = secure;
-        channels = new LinkedBlockingQueue<>(defaultShareConnections);
+        this.sharedConnections = sharedConnections;
+        channels = new LinkedBlockingQueue<>(sharedConnections);
         init();
         try {
             if(channels.isEmpty()) {
@@ -125,7 +119,7 @@ public class NettyClient {
     }
 
     private void connect(String host, int port, boolean secure) {
-        for(int num = channels.size(); num < defaultShareConnections; num++) {
+        for(int num = channels.size(); num < sharedConnections; num++) {
             ChannelFuture channelFuture = bootstrap.connect(host, port);
 //          boolean connected = channelFuture.awaitUninterruptibly(DEFAULT_CONNECT_TIMEOUT, TimeUnit.MILLISECONDS);
 //          if(!connected || !channelFuture.isSuccess()) {
@@ -283,6 +277,12 @@ public class NettyClient {
     public final static class BaoStockMessageToByteEncoder extends MessageToByteEncoder<BaoStockRequest> {
 
         private static final int PADDING_LENGTH = 10;
+
+//        @Override
+//        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+//            Channel channel = ctx.channel();
+//            channel.close();
+//        }
 
         @Override
         protected void encode(ChannelHandlerContext ctx, BaoStockRequest request, ByteBuf byteBuf) throws Exception {

@@ -80,6 +80,10 @@
 <!--            </exclusions>-->
         </dependency>
         <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.mybatis.spring.boot</groupId>
             <artifactId>mybatis-spring-boot-starter</artifactId>
             <version>${mybatis-spring.version}</version>
@@ -105,21 +109,21 @@
             <artifactId>ojdbc11</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.oracle.database.xml</groupId>
-            <artifactId>xdb</artifactId>
-        </dependency>
-        <dependency>
             <groupId>com.oracle.database.jdbc</groupId>
             <artifactId>ucp</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.oracle.database.ha</groupId>
-            <artifactId>ons</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.oracle.database.ha</groupId>
-            <artifactId>simplefan</artifactId>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.oracle.database.xml</groupId>-->
+<!--            <artifactId>xdb</artifactId>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>com.oracle.database.ha</groupId>-->
+<!--            <artifactId>ons</artifactId>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>com.oracle.database.ha</groupId>-->
+<!--            <artifactId>simplefan</artifactId>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-codec</artifactId>

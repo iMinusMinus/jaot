@@ -20,4 +20,6 @@ public class BaoStockProperties {
     private int updateInterval = 7;
 
     private long sessionTimeout = 60 * 60 * 1000L;
+
+    private int sharedConnections = 1;
 }

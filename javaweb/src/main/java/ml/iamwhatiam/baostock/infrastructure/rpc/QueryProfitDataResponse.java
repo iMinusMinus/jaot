@@ -23,12 +23,12 @@ public class QueryProfitDataResponse extends QueryFinanceDataResponse<QueryProfi
         /**
          * 净资产收益率(平均):归属母公司股东净利润/[(期初归属母公司股东的权益+期末归属母公司股东的权益)/2]*100%
          */
-        private final BigDecimal roeAvg;
+        private BigDecimal roeAvg;
 
         /**
          * 销售净利率(%):净利润/营业收入*100%
          */
-        private final BigDecimal npMargin;
+        private BigDecimal npMargin;
 
         /**
          * 销售毛利率(%):毛利/营业收入*100%=(营业收入-营业成本)/营业收入*100%
@@ -38,12 +38,12 @@ public class QueryProfitDataResponse extends QueryFinanceDataResponse<QueryProfi
         /**
          * 净利润(元)
          */
-        private final BigDecimal netProfit;
+        private BigDecimal netProfit;
 
         /**
          * 每股收益
          */
-        private final BigDecimal epsTTM;
+        private BigDecimal epsTTM;
 
         /**
          * 主营营业收入(元)
@@ -53,27 +53,39 @@ public class QueryProfitDataResponse extends QueryFinanceDataResponse<QueryProfi
         /**
          * 总股本
          */
-        private final BigDecimal totalShare;
+        private BigDecimal totalShare;
 
         /**
          * 流通股本
          */
-        private final BigDecimal liqaShare;
+        private BigDecimal liqaShare;
 
         public Profit(String[] data) {
             super(data);
-            this.roeAvg = new BigDecimal(data[3]);
-            this.npMargin = new BigDecimal(data[4]);
+            if(data[3] != null && data[3].length() > 0) {
+                this.roeAvg = new BigDecimal(data[3]);
+            }
+            if(data[4] != null && data[4].length() > 0) {
+                this.npMargin = new BigDecimal(data[4]);
+            }
             if(data[5] != null && data[5].length() > 0) {
                 gpMargin = new BigDecimal(data[5]);
             }
-            this.netProfit = new BigDecimal(data[6]);
-            this.epsTTM = new BigDecimal(data[7]);
+            if(data[6] != null && data[6].length() >0) {
+                this.netProfit = new BigDecimal(data[6]);
+            }
+            if(data[7] != null && data[7].length() > 0) {
+                this.epsTTM = new BigDecimal(data[7]);
+            }
             if(data[8] != null && data[8].length() > 0) {
                 this.mbRevenue = new BigDecimal(data[8]);
             }
-            this.totalShare = new BigDecimal(data[9]);
-            this.liqaShare = new BigDecimal(data[10]);
+            if(data[9] != null && data[9].length() > 0) {
+                this.totalShare = new BigDecimal(data[9]);
+            }
+            if(data[10] != null && data[10].length() > 0) {
+                this.liqaShare = new BigDecimal(data[10]);
+            }
         }
     }
 }

@@ -33,6 +33,10 @@ public class QueryFinanceDataRequest extends BaoStockRequest {
         this(userId, code, Year.now(), financeType);
     }
 
+    public QueryFinanceDataRequest(String userId, String code, LocalDate date, FinanceType financeType) {
+        this(userId, code, Year.of(date.getYear()), (date.getMonthValue() - 1) / 3 + 1, financeType);
+    }
+
     public QueryFinanceDataRequest(String userId, String code, Year year, FinanceType financeType) {
         this(userId, code, year, (LocalDate.now().getMonthValue() - 1) / 3 + 1, financeType);
     }

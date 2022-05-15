@@ -17,9 +17,15 @@ import java.lang.reflect.Proxy;
 @EnableConfigurationProperties(value = {BaoStockProperties.class})
 public class AppConfig {
 
+    private final BaoStockProperties baoStockProperties;
+
+    public AppConfig(BaoStockProperties baoStockProperties) {
+        this.baoStockProperties = baoStockProperties;
+    }
+
     @Bean
     public BaoStockApi baoStockApi() {
-        NettyClient client = new NettyClient(Constants.BAOSTOCK_SERVER_IP, Constants.BAOSTOCK_SERVER_PORT, false);
+        NettyClient client = new NettyClient(Constants.BAOSTOCK_SERVER_IP, Constants.BAOSTOCK_SERVER_PORT, false, baoStockProperties.getSharedConnections());
         Class[] interfaces = {BaoStockApi.class};
         return (BaoStockApi) Proxy.newProxyInstance(AppConfig.class.getClassLoader(), interfaces,
                 (obj, method, args)-> client.request((BaoStockRequest) args[0]));

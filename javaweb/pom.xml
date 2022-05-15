@@ -86,15 +86,42 @@
             <artifactId>mybatis-spring-boot-starter</artifactId>
             <version>${mybatis-spring.version}</version>
         </dependency>
-        <dependency>
-            <groupId>com.zaxxer</groupId>
-            <artifactId>HikariCP</artifactId>
-        </dependency>
 <!--        <dependency>-->
-<!--            <groupId>com.oracle.database.jdbc</groupId>-->
-<!--            <artifactId>ojdbc11</artifactId>-->
-<!--            <version>21.5.0.0</version>-->
+<!--            <groupId>com.zaxxer</groupId>-->
+<!--            <artifactId>HikariCP</artifactId>-->
 <!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>org.postgresql</groupId>-->
+<!--            <artifactId>postgresql</artifactId>-->
+<!--        </dependency>-->
+        <!-- https://www.oracle.com/database/technologies/maven-central-guide.html -->
+        <!-- ojdbc8: -->
+        <!-- Supports JDBC 4.2 spec and for use with JDK8, JDK11, JDK12, JDK13, JDK14 and JDK15 -->
+        <!-- ojdbc10: -->
+        <!-- Supports JDBC 4.3 spec and for use with JDK 10 and JDK 11. Available only in 19c version. -->
+        <!-- ojdbc11: -->
+        <!-- Supports JDBC 4.3 spec and for use with JDK11, JDK12, JDK13, JDK14 and JDK15. -->
+        <!-- Debug: odjbc*_g. Connection Pool: +(ucp). High availability: +(ons)(simplefan). NLS: +(orai18n). Observability: +(dms). -->
+        <dependency>
+            <groupId>com.oracle.database.jdbc</groupId>
+            <artifactId>ojdbc11</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.oracle.database.xml</groupId>
+            <artifactId>xdb</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.oracle.database.jdbc</groupId>
+            <artifactId>ucp</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.oracle.database.ha</groupId>
+            <artifactId>ons</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.oracle.database.ha</groupId>
+            <artifactId>simplefan</artifactId>
+        </dependency>
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-codec</artifactId>
@@ -140,7 +167,7 @@
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <version>1.4.197</version>
-            <scope>runtime</scope>
+            <scope>test</scope>
         </dependency>
 
         <dependency>

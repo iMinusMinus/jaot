@@ -7,6 +7,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.epoll.Epoll;
 import io.netty.channel.epoll.EpollEventLoopGroup;
@@ -23,14 +24,14 @@ import org.springframework.util.StringUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.CRC32;
 import java.util.zip.Inflater;
@@ -44,13 +45,13 @@ public class NettyClient {
 
     private final static String CLIENT_TIME_OUT = "client timeout";
 
-    private final static String UNKNOWN_ERROR = "unknown error";
-
     private final static long DEFAULT_CONNECT_TIMEOUT = 3000L;
 
     private final static long DEFAULT_WAIT_TIME = 1000L;
 
     private final static String END_OF_RESPONSE = "<![CDATA[]]>\n";
+
+    private static long defaultReadTimeout;
 
     private final String host;
 
@@ -58,26 +59,37 @@ public class NettyClient {
 
     private final boolean secure;
 
+    private final int sharedConnections;
+
     private Bootstrap bootstrap;
 
-    private Channel channel;
+    private final BlockingQueue<Channel> channels;
 
     static {
         epoll = System.getProperty("os.name").contains("linux") && Epoll.isAvailable();
+        try {
+            defaultReadTimeout = Long.parseLong(System.getProperty("baostock.socket.readTimeout"));
+        } catch (Throwable ignore) {
+            defaultReadTimeout = DEFAULT_WAIT_TIME;
+        }
     }
 
-    public NettyClient(String host, int port, boolean secure) {
+    public NettyClient(String host, int port, boolean secure, int sharedConnections) {
         this.host = host;
         this.port = port;
         this.secure = secure;
+        this.sharedConnections = sharedConnections;
+        channels = new LinkedBlockingQueue<>(sharedConnections);
         init();
         try {
-            if(channel == null || !channel.isActive()) {
+            if(channels.isEmpty()) {
                 connect();
             }
         } catch (Exception e){
-            if (channel != null) {
-                channel.close();
+            for(Channel channel : channels) {
+                if (channel != null) {
+                    channel.close();
+                }
             }
         }
     }
@@ -88,13 +100,14 @@ public class NettyClient {
         bootstrap = new Bootstrap();
         bootstrap.group(eventExecutors)
                 .channel(klazz)
+                .option(ChannelOption.SO_RCVBUF, 8196)
                 .handler(new ChannelInitializer<SocketChannel>() {
 
                     @Override
                     protected void initChannel(SocketChannel socketChannel) throws Exception {
                         ByteBuf delimiter = Unpooled.copiedBuffer(END_OF_RESPONSE, StandardCharsets.UTF_8);
                         socketChannel.pipeline()
-                                .addLast("stickDecoder", new DelimiterBasedFrameDecoder(Integer.MAX_VALUE, delimiter))
+                                .addLast("stockDecoder", new DelimiterBasedFrameDecoder(Integer.MAX_VALUE, delimiter))
                                 .addLast("decoder", new BaoStockByteToMessageDecoder())
                                 .addLast("encoder", new BaoStockMessageToByteEncoder());
                     }
@@ -106,31 +119,27 @@ public class NettyClient {
     }
 
     private void connect(String host, int port, boolean secure) {
-        ChannelFuture channelFuture = bootstrap.connect(host, port);
-//        boolean connected = channelFuture.awaitUninterruptibly(DEFAULT_CONNECT_TIMEOUT, TimeUnit.MILLISECONDS);
-//        if(!connected || !channelFuture.isSuccess()) {
-//            throw new RuntimeException("connect fail", channelFuture.cause());
-//        }
-        Channel newChannel = channelFuture.syncUninterruptibly().channel();
-        if(channel != null) {
-            channel.close();
+        for(int num = channels.size(); num < sharedConnections; num++) {
+            ChannelFuture channelFuture = bootstrap.connect(host, port);
+//          boolean connected = channelFuture.awaitUninterruptibly(DEFAULT_CONNECT_TIMEOUT, TimeUnit.MILLISECONDS);
+//          if(!connected || !channelFuture.isSuccess()) {
+//              throw new RuntimeException("connect fail", channelFuture.cause());
+//          }
+            Channel newChannel = channelFuture.syncUninterruptibly().channel();
+            channels.offer(newChannel);
         }
-        channel = newChannel;
     }
 
     public <T extends BaoStockResponse> T request(BaoStockRequest msg) {
-        long readTimeout;
-        try {
-            readTimeout = Long.parseLong(System.getProperty("baostock.socket.readTimeout"));
-        } catch (Throwable ignore) {
-            readTimeout = DEFAULT_WAIT_TIME;
-        }
-        return request(msg, readTimeout);
+        return request(msg, defaultReadTimeout);
     }
 
     public <T extends BaoStockResponse> T request(BaoStockRequest request, long awaitMs) {
-        DefaultFuture defaultFuture = DefaultFuture.newFuture(channel, request);
-        long beforeWrite = System.currentTimeMillis();
+        long beforeBorrow = System.currentTimeMillis();
+        Channel channel = borrowChannel(beforeBorrow, beforeBorrow + awaitMs);
+        long left = System.currentTimeMillis() - beforeBorrow;
+        log.debug("borrow channel[{}] cost {}ms", channel.id().asLongText(), left);
+        DefaultFuture defaultFuture = DefaultFuture.newFuture(left < awaitMs ? awaitMs - left : awaitMs, channel, request);
         ChannelFuture future = channel.writeAndFlush(request);
         future.addListener( t -> {
             if(t.isSuccess()) {
@@ -138,46 +147,70 @@ public class NettyClient {
             }
         });
         if(future.cause() != null) {
+            returnChannel(channel, awaitMs - (System.currentTimeMillis() - beforeBorrow));
             throw new RuntimeException(future.cause());
         }
+        T result = null;
         try {
-            return (T) defaultFuture.get(awaitMs, TimeUnit.MILLISECONDS);
+            result = (T) defaultFuture.get(awaitMs, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
-            log.error("elapse {}ms", System.currentTimeMillis() - beforeWrite, e);
+            log.error("elapse {}ms", System.currentTimeMillis() - beforeBorrow, e);
         }
-        return null;
+        returnChannel(channel, awaitMs - (System.currentTimeMillis() - beforeBorrow));
+        return result;
     }
 
-    public static class DefaultFuture extends CompletableFuture<BaoStockResponse> {
+    private Channel borrowChannel(long effective, long invalid) {
+        Channel channel;
+        try {
+            if(channels.isEmpty()) {
+                invalid = invalid + DEFAULT_CONNECT_TIMEOUT;
+                connect();
+            }
+            channel = channels.poll(invalid - effective, TimeUnit.MILLISECONDS);
+            if(channel != null && !channel.isActive()) {
+                channels.remove(channel);
+                return borrowChannel(effective, invalid);
+            }
+            return channel;
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
 
-        private static final Map<Long, Channel> CHANNELS = new ConcurrentHashMap<>();
+    private void returnChannel(Channel channel, long waitTime) {
+        if(!channel.isActive()) {
+            channels.remove(channel);
+        } else {
+            try {
+                channels.offer(channel, waitTime, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                log.error(e.getMessage(), e);
+            }
+        }
+    }
+
+    private static class DefaultFuture extends CompletableFuture<BaoStockResponse> {
 
         private static final Map<Long, DefaultFuture> FUTURES = new ConcurrentHashMap<>();
 
         public static final Timer TIME_OUT_TIMER = new Timer();
 
-        private final Long id;
-
-        private final Channel channel;
-
-        private final BaoStockRequest request;
-
         private TimerTask task;
 
         private volatile long sent;
 
-        private DefaultFuture(long id, Channel channel, BaoStockRequest request) {
-            this.id = id;
-            this.channel = channel;
-            this.request = request;
-            FUTURES.put(id, this);
-            CHANNELS.put(id, channel);
+        private final String msgType;
+
+        private DefaultFuture(BaoStockRequest request) {
+            this.msgType = request.getRequestCode();
+            FUTURES.put(request.currentId(), this);
         }
 
-        public static DefaultFuture newFuture(Channel channel, BaoStockRequest request) {
-            DefaultFuture future = new DefaultFuture(request.currentId(), channel, request);
-//            future.task = new TimeoutCheckTask(request.getId());
-//            TIME_OUT_TIMER.schedule(future.task, 1015L, 30L);
+        public static DefaultFuture newFuture(long timeout, Channel channel, BaoStockRequest request) {
+            DefaultFuture future = new DefaultFuture(request);
+            future.task = new TimeoutCheckTask(request.currentId());
+            TIME_OUT_TIMER.schedule(future.task, timeout, 30);
             return future;
         }
 
@@ -197,24 +230,20 @@ public class NettyClient {
         }
 
         public static void received(BaoStockResponse response, boolean timeout) {
-            try {
-                DefaultFuture futureResult = FUTURES.remove(response.id);
-                if(futureResult != null) {
-                    if(!timeout && futureResult.task != null) {
-                        futureResult.task.cancel();
-                    }
-                    futureResult.doReceived(response);
+            DefaultFuture futureResult = FUTURES.remove(response.id);
+            if (futureResult != null) {
+                if (!timeout && futureResult.task != null) {
+                    futureResult.task.cancel();
                 }
-            } finally {
-                CHANNELS.remove(response.id);
+                futureResult.doReceived(response);
             }
         }
 
         private void doReceived(BaoStockResponse response) {
-            if(SERVER_TIME_OUT.equals(response.getErrorCode())
-                    || CLIENT_TIME_OUT.equals(response.getErrorCode())
-                    || UNKNOWN_ERROR.equals(response.getErrorCode())) {
-                completeExceptionally(new RuntimeException(response.getErrorCode()));
+            if(Constants.BSERR_RECVSOCK_TIMEOUT.equals(response.getErrorCode())
+                    || Constants.BSERR_SENDSOCK_TIMEOUT.equals(response.getErrorCode())
+                    || Constants.BSERR_SYSTEM_ERROR.equals(response.getErrorCode())) {
+                completeExceptionally(new RuntimeException(response.getErrorMsg()));
             }
             complete(response);
         }
@@ -223,35 +252,37 @@ public class NettyClient {
 
     private static class TimeoutCheckTask extends TimerTask {
 
-        private final List<Long> idsToCheck = new LinkedList<>();
+        private final Long id;
 
-        TimeoutCheckTask(Long requestID) {
-            idsToCheck.add(requestID);
+        TimeoutCheckTask(Long id) {
+            this.id = id;
         }
 
         @Override
         public void run() {
-            Iterator<Long> it = idsToCheck.iterator();
-            while (it.hasNext()) {
-                Long requestID = it.next();
-                DefaultFuture future = DefaultFuture.getFuture(requestID);
-                if (future == null || future.isDone()) {
-                    continue;
-                }
-                String errorCode = future.sent > 0 ? SERVER_TIME_OUT : CLIENT_TIME_OUT;
-                String[] headArray = {Constants.BAOSTOCK_CLIENT_VERSION, null, String.valueOf(errorCode.length())};
-                String[] bodyArray = {errorCode, null};
-                BaoStockResponse result = new BaoStockResponse(headArray, bodyArray);
-                result.id = requestID;
-                DefaultFuture.received(result, true);
-                it.remove();
+            DefaultFuture future = DefaultFuture.getFuture(id);
+            if (future == null || future.isDone()) {
+                return;
             }
+            String errorCode = future.sent > 0 ? Constants.BSERR_RECVSOCK_TIMEOUT : Constants.BSERR_SENDSOCK_TIMEOUT;
+            String errorMessage = future.sent > 0 ? SERVER_TIME_OUT : CLIENT_TIME_OUT;
+            String[] headArray = {Constants.BAOSTOCK_CLIENT_VERSION, requestCodeToResponseCode(future.msgType), String.valueOf(errorMessage.length())};
+            String[] bodyArray = {errorCode, errorMessage};
+            BaoStockResponse result = ResultFactory.newInstance(headArray, bodyArray);
+            result.id = id;
+            DefaultFuture.received(result, true);
         }
     }
 
     public final static class BaoStockMessageToByteEncoder extends MessageToByteEncoder<BaoStockRequest> {
 
         private static final int PADDING_LENGTH = 10;
+
+//        @Override
+//        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+//            Channel channel = ctx.channel();
+//            channel.close();
+//        }
 
         @Override
         protected void encode(ChannelHandlerContext ctx, BaoStockRequest request, ByteBuf byteBuf) throws Exception {
@@ -266,6 +297,17 @@ public class NettyClient {
             byteBuf.writeBytes(msg.getBytes(StandardCharsets.UTF_8));
         }
 
+    }
+
+    private static String requestCodeToResponseCode(String requestCode) {
+        int requestType;
+        try {
+            requestType = Integer.parseInt(requestCode);
+            return zerofill(requestType + 1, 2);
+        } catch (Exception ignore) {
+            log.error("internal error, request '{}' cannot convert to response code as rule: responseCode=requestCode+1", requestCode);
+        }
+        return null;
     }
 
     private static String zerofill(int num, int length) {
@@ -305,7 +347,7 @@ public class NettyClient {
             String[] bodyArray = msgBody.split(Constants.MESSAGE_SPLIT);
             if(Constants.MESSAGE_TYPE_EXCEPTIONS.equals(headerArray[1])) {
                 log.info("replace type from '{}' to '{}' avoid class cast exception", headerArray[1], ctx.channel().attr(AttributeKey.valueOf("type")).get());
-                headerArray[1] = zerofill(Integer.parseInt((String) ctx.channel().attr(AttributeKey.valueOf("type")).get()) + 1, 2);
+                headerArray[1] = requestCodeToResponseCode((String) ctx.channel().attr(AttributeKey.valueOf("type")).get());
             }
             BaoStockResponse result = ResultFactory.newInstance(headerArray, bodyArray);
             result.id = (Long) ctx.channel().attr(AttributeKey.valueOf("id")).get();
@@ -321,7 +363,7 @@ public class NettyClient {
         decompresser.setInput(data);
         ByteArrayOutputStream baos = new ByteArrayOutputStream(data.length);
         try {
-            byte[] buffer = new byte[1024];
+            byte[] buffer = new byte[8192];
             while (!decompresser.finished()) {
                 int index = decompresser.inflate(buffer);
                 baos.write(buffer, 0, index);
@@ -341,6 +383,7 @@ public class NettyClient {
 
     static long crc32(byte[] data) {
         CRC32 compress = new CRC32();
+        compress.reset();
         compress.update(data);
         return compress.getValue();
     }

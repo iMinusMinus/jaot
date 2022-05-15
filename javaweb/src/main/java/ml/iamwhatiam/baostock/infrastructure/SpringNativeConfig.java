@@ -18,14 +18,19 @@ import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.codec.MessageToByteEncoder;
 import io.netty.util.ReferenceCountUtil;
+import ml.iamwhatiam.baostock.infrastructure.dao.StockRepositoryImpl;
 import ml.iamwhatiam.baostock.infrastructure.rpc.BaoStockResponse;
 import ml.iamwhatiam.baostock.infrastructure.rpc.NettyClient;
 import ml.iamwhatiam.baostock.infrastructure.rpc.QueryHistoryKDataPlusResponse;
 import ml.iamwhatiam.baostock.infrastructure.web.StockVO;
+import oracle.ucp.jdbc.PoolDataSource;
+import oracle.ucp.jdbc.PoolDataSourceImpl;
 import org.fusesource.jansi.WindowsAnsiOutputStream;
 import org.fusesource.jansi.internal.Kernel32;
 import org.springframework.aot.context.bootstrap.generator.infrastructure.nativex.NativeConfigurationRegistry;
+import org.springframework.aot.context.bootstrap.generator.infrastructure.nativex.NativeResourcesEntry;
 import org.springframework.nativex.AotOptions;
+import org.springframework.nativex.hint.AotProxyHint;
 import org.springframework.nativex.hint.FieldHint;
 import org.springframework.nativex.hint.MethodHint;
 import org.springframework.nativex.hint.NativeHint;
@@ -62,8 +67,14 @@ import java.util.Locale;
                 DelayingShutdownHook.class
         }, access = {TypeAccess.PUBLIC_CONSTRUCTORS, TypeAccess.PUBLIC_METHODS}),
 })
+@NativeHint(trigger = PoolDataSource.class, types = {
+        @TypeHint(types = {
+                PoolDataSource.class,
+                PoolDataSourceImpl.class,
+        }, access = {TypeAccess.DECLARED_METHODS, TypeAccess.PUBLIC_METHODS, TypeAccess.DECLARED_FIELDS})
+})
 // @see org.springframework.transaction.annotation.TransactionalNativeConfigurationProcessor
-//@AotProxyHint(targetClass = StockRepositoryImpl.class, interfaces = {AopInfrastructureBean.class}, proxyFeatures = ProxyBits.IS_STATIC)
+@AotProxyHint(targetClass = StockRepositoryImpl.class)
 // netty, refer io.rsocket.RSocketHints or io.lettuce.LettuceHints
 @NativeHint(trigger = NettyClient.class, types = {
         @TypeHint(typeNames = "io.netty.util.internal.shaded.org.jctools.queues.BaseMpscLinkedArrayQueueColdProducerFields",
@@ -132,6 +143,11 @@ public class SpringNativeConfig implements NativeConfiguration {
                         jniConfiguration.forType(Kernel32.COORD.class).withAccess(TypeAccess.DECLARED_FIELDS);
                         jniConfiguration.forType(Kernel32.SMALL_RECT.class).withAccess(TypeAccess.DECLARED_FIELDS);
                 }
+                // h2-console support
+                if(ClassUtils.isPresent("org.h2.Driver", null)) {
+                        registry.resources().add(NativeResourcesEntry.of("org/h2/util/data.zip"));
+                }
+                // h2 jdk8 datetime support
                 if(ClassUtils.isPresent("org.h2.util.LocalDateTimeUtils", null)) {
                         Method ofNanoOfDay = ReflectionUtils.findMethod(LocalTime.class, "ofNanoOfDay", long.class);
                         Method toNanoOfDay = ReflectionUtils.findMethod(LocalTime.class, "toNanoOfDay");

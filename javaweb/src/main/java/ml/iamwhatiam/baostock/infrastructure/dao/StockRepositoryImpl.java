@@ -4,7 +4,8 @@ import lombok.extern.slf4j.Slf4j;
 import ml.iamwhatiam.baostock.domain.IndustryEntity;
 import ml.iamwhatiam.baostock.domain.StockEntity;
 import ml.iamwhatiam.baostock.domain.StockRepository;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -15,7 +16,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 // replace @Repository to @Component avoid PersistenceExceptionTranslationInterceptor advice cglib generate sub class trigger AopProxyUtils invoke isSealed in JDK17
-@Component
+@Repository
 @Slf4j
 public class StockRepositoryImpl implements StockRepository {
 
@@ -26,6 +27,7 @@ public class StockRepositoryImpl implements StockRepository {
     private IndustryMapper industryMapper;
 
     @Override
+    @Transactional
     public List<IndustryEntity> load() {
         List<IndustryDataObject> industryDataObjectList = industryMapper.findAll();
         List<StockDataObject> stockDataObjectList = stockMapper.findAll();

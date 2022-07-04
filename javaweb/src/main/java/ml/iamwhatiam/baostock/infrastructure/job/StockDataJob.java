@@ -3,11 +3,15 @@ package ml.iamwhatiam.baostock.infrastructure.job;
 import lombok.extern.slf4j.Slf4j;
 import ml.iamwhatiam.baostock.domain.StockIndexType;
 import ml.iamwhatiam.baostock.infrastructure.BaoStockProperties;
+import ml.iamwhatiam.baostock.infrastructure.dao.DividendDataObject;
+import ml.iamwhatiam.baostock.infrastructure.dao.DividendMapper;
 import ml.iamwhatiam.baostock.infrastructure.dao.FinanceDataObject;
 import ml.iamwhatiam.baostock.infrastructure.dao.FinanceMapper;
 import ml.iamwhatiam.baostock.infrastructure.dao.IndexMapper;
 import ml.iamwhatiam.baostock.infrastructure.dao.IndustryDataObject;
 import ml.iamwhatiam.baostock.infrastructure.dao.IndustryMapper;
+import ml.iamwhatiam.baostock.infrastructure.dao.KDataObject;
+import ml.iamwhatiam.baostock.infrastructure.dao.KMapper;
 import ml.iamwhatiam.baostock.infrastructure.dao.StockDataObject;
 import ml.iamwhatiam.baostock.infrastructure.dao.StockIndexDataObject;
 import ml.iamwhatiam.baostock.infrastructure.rpc.BaoStockApi;
@@ -19,9 +23,13 @@ import ml.iamwhatiam.baostock.infrastructure.rpc.QueryAllStockRequest;
 import ml.iamwhatiam.baostock.infrastructure.rpc.QueryAllStockResponse;
 import ml.iamwhatiam.baostock.infrastructure.rpc.QueryBalanceDataResponse;
 import ml.iamwhatiam.baostock.infrastructure.rpc.QueryCashFlowDataResponse;
+import ml.iamwhatiam.baostock.infrastructure.rpc.QueryDividendDataRequest;
+import ml.iamwhatiam.baostock.infrastructure.rpc.QueryDividendDataResponse;
 import ml.iamwhatiam.baostock.infrastructure.rpc.QueryDupontDataResponse;
 import ml.iamwhatiam.baostock.infrastructure.rpc.QueryFinanceDataRequest;
 import ml.iamwhatiam.baostock.infrastructure.rpc.QueryGrowthDataResponse;
+import ml.iamwhatiam.baostock.infrastructure.rpc.QueryHistoryKDataPlusRequest;
+import ml.iamwhatiam.baostock.infrastructure.rpc.QueryHistoryKDataPlusResponse;
 import ml.iamwhatiam.baostock.infrastructure.rpc.QueryOperationDataResponse;
 import ml.iamwhatiam.baostock.infrastructure.rpc.QueryProfitDataResponse;
 import ml.iamwhatiam.baostock.infrastructure.rpc.QueryStockBasicRequest;
@@ -36,6 +44,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
+import java.time.Year;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -67,6 +76,12 @@ public class StockDataJob {
     @Resource
     private FinanceMapper financeMapper;
 
+    @Resource
+    private KMapper kMapper;
+
+    @Resource
+    private DividendMapper dividendMapper;
+
     private LocalDate lastSyncDate;
 
     private String accessToken;
@@ -88,6 +103,8 @@ public class StockDataJob {
             return;
         }
         List<String> stockCodes = stocks.getData().stream().map(QueryAllStockResponse.Stock::getCode).collect(Collectors.toList());
+        // 历史K线数据
+        addKPlusData(stockCodes);
         if(lastSyncDate == null || lastSyncDate.plusDays(baoStockProperties.getUpdateInterval()).isBefore(LocalDate.now())) {
             // 各股票上市、退市等信息
             mergeStockBasic(stockCodes);
@@ -104,9 +121,128 @@ public class StockDataJob {
                     .filter(t -> Integer.valueOf(1).equals(t.getStatus()) && Integer.valueOf(1).equals(t.getType()))
                     .collect(Collectors.toMap(StockDataObject::getCode, StockDataObject::getIpoDate));
             addSeasonReportIfNecessary(stockDataObjects);
+            // 周/月K线数据
+            addKPlusData(stockDataObjects);
+            // 除权除息信息
+            addDividendData(stockDataObjects);
         }
         lastSyncDate = LocalDate.now();
         log.info("update stock basic info job end");
+    }
+
+    private void addDividendData(Map<String, LocalDate> stockDataObjects) {
+        Map<String, DividendDataObject> latestDividendData = dividendMapper.findLatest().stream().collect(Collectors.toMap(DividendDataObject::getCode, Function.identity()));
+        for(Map.Entry<String, LocalDate> pair : stockDataObjects.entrySet()) {
+            DividendDataObject history = latestDividendData.get(pair.getKey());
+            int year = pair.getValue().getYear();
+            if(history != null) {
+                year = history.getPlanDate().getYear(); // XXX
+            }
+            QueryDividendDataResponse response = baoStockApi.queryDividendData(new QueryDividendDataRequest(accessToken, pair.getKey(), Year.of(year)));
+            if(!handleRemoteResult(Constants.MESSAGE_TYPE_QUERYDIVIDENDDATA_REQUEST, response)) {
+                continue;
+            }
+            int effect = 0;
+            for(QueryDividendDataResponse.Dividend dividend : response.getData()) {
+                DividendDataObject dividendDataObject = new DividendDataObject();
+                dividendDataObject.setCode(dividend.getCode());
+                dividendDataObject.setPreNoticeDate(dividend.getDividPreNoticeDate());
+                dividendDataObject.setAgmAnnouncementDate(dividend.getDividAgmPumDate());
+                dividendDataObject.setPlanAnnounceDate(dividend.getDividPlanAnnounceDate());
+                dividendDataObject.setPlanDate(dividend.getDividPlanDate());
+                dividendDataObject.setRegisterDate(dividend.getDividRegistDate());
+                dividendDataObject.setPayDate(dividend.getDividPayDate());
+                dividendDataObject.setMarketDate(dividend.getDividStockMarketDate());
+                dividendDataObject.setCashPerShareBeforeTax(dividend.getDividCashPsBeforeTax());
+                dividendDataObject.setCashPerShareAfterTax(dividend.getDividCashPsAfterTax());
+                dividendDataObject.setStockPerShare(dividend.getDividStocksPs());
+                dividendDataObject.setCashStock(dividend.getDividCashStock());
+                dividendDataObject.setReserveToStockPerShare(dividend.getDividReserveToStockPs());
+                effect += dividendMapper.insert(dividendDataObject);
+            }
+            if(effect != 0) {
+                log.info("add '{}' dividend data for [{}]", effect, pair.getKey());
+            }
+        }
+    }
+
+    private void addKPlusData(Map<String, LocalDate> stockDataObjects) {
+        Map<String, List<KDataObject>> kDataObjects = kMapper.findLatest().stream().collect(Collectors.groupingBy(KDataObject::getCode, Collectors.toList()));
+        int daily = 0, weekly = 0, monthly = 0;
+        for(Map.Entry<String, LocalDate> pair : stockDataObjects.entrySet()) {
+            List<KDataObject> latestKDataObjects = kDataObjects.get(pair.getKey());
+            // 1. 历史数据存在
+            boolean missingDayFrequency = true, missingWeekFrequency = true, missingMonthFrequency = true;
+            if(latestKDataObjects != null && !latestKDataObjects.isEmpty()) {
+                for (KDataObject k : latestKDataObjects) {
+                    QueryHistoryKDataPlusResponse.Frequency frequency = QueryHistoryKDataPlusResponse.Frequency.getInstance(k.getFrequency());
+                    int effect = addKPlusData(pair.getKey(), k.getDate().plusDays(1), frequency);
+                    if (QueryHistoryKDataPlusResponse.Frequency.DAY == frequency) {
+                        missingDayFrequency = false;
+                        daily += effect;
+                    } else if (QueryHistoryKDataPlusResponse.Frequency.WEEK == frequency) {
+                        missingWeekFrequency = false;
+                        weekly += effect;
+                    } else if (QueryHistoryKDataPlusResponse.Frequency.MONTH == frequency) {
+                        missingMonthFrequency = false;
+                        monthly += effect;
+                    }
+                }
+            }
+            // 2. 历史数据缺失
+            if(missingDayFrequency) {
+                daily += addKPlusData(pair.getKey(), pair.getValue(), QueryHistoryKDataPlusResponse.Frequency.DAY);
+            }
+            if(missingWeekFrequency) {
+                weekly += addKPlusData(pair.getKey(), pair.getValue(), QueryHistoryKDataPlusResponse.Frequency.WEEK);
+            }
+            if(missingMonthFrequency) {
+                monthly += addKPlusData(pair.getKey(), pair.getValue(), QueryHistoryKDataPlusResponse.Frequency.MONTH);
+            }
+        }
+        log.info("add '{}' daily k data, '{}' weekly k data, '{}' monthly k data", daily, weekly, monthly);
+    }
+
+    private void addKPlusData(List<String> stocks) {
+        int total = 0;
+        for(String stockCode: stocks) {
+            total += addKPlusData(stockCode, LocalDate.now(), QueryHistoryKDataPlusResponse.Frequency.DAY);
+        }
+        log.info("add '{}' daily k data", total);
+    }
+
+    private int addKPlusData(String stockCode, LocalDate startDate, QueryHistoryKDataPlusResponse.Frequency frequency) {
+        QueryHistoryKDataPlusResponse response = baoStockApi.queryHistoryKDataPlus(new QueryHistoryKDataPlusRequest(accessToken, stockCode, startDate, frequency));
+        if(!handleRemoteResult(Constants.MESSAGE_TYPE_GETKDATAPLUS_REQUEST, response)) {
+            return 0;
+        }
+        log.debug("add '{}' k data for [{}], frequency={}", response.getData().size(), stockCode, frequency.getFrequency());
+        int effect = 0;
+        for(QueryHistoryKDataPlusResponse.Quotation quotation : response.getData()) {
+            KDataObject kDataObject = new KDataObject();
+            kDataObject.setCode(quotation.getCode());
+            kDataObject.setDate(quotation.getDate());
+            kDataObject.setTime(quotation.getTime());
+            kDataObject.setOpeningPrice(quotation.getOpen());
+            kDataObject.setHighPrice(quotation.getHigh());
+            kDataObject.setLowPrice(quotation.getLow());
+            kDataObject.setClosingPrice(quotation.getClose());
+            kDataObject.setPreClosePrice(quotation.getPreClose());
+            kDataObject.setVolume(quotation.getVolume());
+            kDataObject.setAmount(quotation.getAmount());
+            kDataObject.setAdjustFlag(quotation.getAdjustFlag());
+            kDataObject.setTurn(quotation.getTurn());
+            kDataObject.setTradeStatus(quotation.getTradeStatus());
+            kDataObject.setChangePercent(quotation.getPctChg());
+            kDataObject.setTrailingTwelveMonthsPriceToEarningRatio(quotation.getPeTTM());
+            kDataObject.setMostRecentQuarterPriceToBookRatio(quotation.getPbMRQ());
+            kDataObject.setTrailingTwelveMonthsPriceToSaleRatio(quotation.getPsTTM());
+            kDataObject.setTrailingTwelveMonthsPriceToCashFlow(quotation.getPcfNcfTTM());
+            kDataObject.setSpecialTreatment(quotation.isSt());
+            kDataObject.setFrequency(frequency.getFrequency());
+            effect += kMapper.insert(kDataObject);
+        }
+        return effect;
     }
 
     private void addSeasonReportIfNecessary(Map<String, LocalDate> stocks) {

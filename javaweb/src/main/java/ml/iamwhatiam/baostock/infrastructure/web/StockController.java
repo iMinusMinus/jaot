@@ -50,7 +50,7 @@ public class StockController {
         if(condition != null && condition.getPosition() != null) {
             n = condition.getPosition();
         }
-        List<StockVO> result = StockAssembler.convert(potentialStockService.top(n, 3, 0));
+        List<StockVO> result = StockAssembler.convert(potentialStockService.top(n, 3));
         Collections.sort(result);
         return result;
     }

@@ -54,6 +54,10 @@ public class QueryHistoryKDataPlusRequest extends BaoStockRequest {
         this(userId, code, LocalDate.parse(Constants.DEFAULT_START_DATE, DateTimeFormatter.ISO_LOCAL_DATE), LocalDate.now(), frequency, adjustFlag);
     }
 
+    public QueryHistoryKDataPlusRequest(String userId, String code, LocalDate startDate, QueryHistoryKDataPlusResponse.Frequency frequency) {
+        this(userId, code, startDate, LocalDate.now(), frequency, 3);
+    }
+
     public QueryHistoryKDataPlusRequest(String userId, String code, LocalDate startDate, LocalDate endDate, QueryHistoryKDataPlusResponse.Frequency frequency, int adjustFlag) {
         super(userId);
         this.code = code;

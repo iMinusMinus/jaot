@@ -1,0 +1,41 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ml.iamwhatiam.baostock.infrastructure.dao.DividendMapper">
+    <resultMap id="baseResultMap" type="ml.iamwhatiam.baostock.infrastructure.dao.DividendDataObject">
+        <result column="code" property="code" jdbcType="VARCHAR" javaType="string" />
+        <result column="divid_pre_notice_date" property="preNoticeDate" jdbcType="DATE" javaType="java.time.LocalDate" />
+        <result column="divid_agm_pum_date" property="agmAnnouncementDate" jdbcType="DATE" javaType="java.time.LocalDate" />
+        <result column="divid_plan_announce_date" property="planAnnounceDate" jdbcType="DATE" javaType="java.time.LocalDate" />
+        <result column="divid_plan_date" property="planDate" jdbcType="DATE" javaType="java.time.LocalDate" />
+        <result column="divid_regist_date" property="registerDate" jdbcType="DATE" javaType="java.time.LocalDate" />
+        <result column="divid_operate_date" property="operateDate" jdbcType="DATE" javaType="java.time.LocalDate" />
+        <result column="divid_pay_date" property="payDate" jdbcType="DATE" javaType="java.time.LocalDate" />
+        <result column="divid_stock_market_date" property="marketDate" jdbcType="DATE" javaType="java.time.LocalDate" />
+        <result column="divid_cash_ps_before_tax" property="cashPerShareBeforeTax" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+        <result column="divid_cash_ps_after_tax" property="cashPerShareAfterTax" jdbcType="VARCHAR" javaType="string" />
+        <result column="divid_stocks_ps" property="stockPerShare" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+        <result column="divid_cash_stock" property="cashStock" jdbcType="VARCHAR" javaType="string" />
+        <result column="divid_reserve_to_stock_ps" property="reserveToStockPerShare" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
+    </resultMap>
+    <select id="findAll" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.DividendDataObject" resultMap="baseResultMap">
+        SELECT code, divid_pre_notice_date, divid_agm_pum_date, divid_plan_announce_date, divid_plan_date, divid_regist_date, divid_operate_date, divid_pay_date, divid_stock_market_date, divid_cash_ps_before_tax, divid_cash_ps_after_tax, divid_stocks_ps, divid_cash_stock, divid_reserve_to_stock_ps
+        FROM BAO_STOCK_DIVIDEND_DATA
+    </select>
+    <select id="findLatest" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.DividendDataObject" resultMap="baseResultMap">
+        SELECT code, divid_pre_notice_date, max(divid_plan_date) divid_plan_date
+        FROM BAO_STOCK_DIVIDEND_DATA
+        GROUP BY code
+    </select>
+
+    <insert id="insert" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.DividendDataObject">
+        INSERT INTO BAO_STOCK_DIVIDEND_DATA(code, divid_pre_notice_date, divid_agm_pum_date, divid_plan_announce_date, divid_plan_date, divid_regist_date, divid_operate_date, divid_pay_date, divid_stock_market_date, divid_cash_ps_before_tax, divid_cash_ps_after_tax, divid_stocks_ps, divid_cash_stock, divid_reserve_to_stock_ps)
+        VALUES (#{code}, #{preNoticeDate,jdbcType=DATE}, #{agmAnnouncementDate}, #{planAnnounceDate}, #{planDate}, #{registerDate}, #{operateDate}, #{payDate}, #{marketDate,jdbcType=DATE}, #{cashPerShareBeforeTax}, #{cashPerShareAfterTax,jdbcType=VARCHAR}, #{stockPerShare}, #{cashStock,jdbcType=VARCHAR}, #{divid_reserve_to_stock_ps,jdbcType=VARCHAR})
+    </insert>
+    <insert id="insert" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.DividendDataObject" databaseId="oracle">
+        <selectKey keyProperty="id" order="BEFORE" resultType="long">
+            SELECT SEQ_BAO_STOCK_DIVIDEND_DATA.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO BAO_STOCK_DIVIDEND_DATA(id, code, divid_pre_notice_date, divid_agm_pum_date, divid_plan_announce_date, divid_plan_date, divid_regist_date, divid_operate_date, divid_pay_date, divid_stock_market_date, divid_cash_ps_before_tax, divid_cash_ps_after_tax, divid_stocks_ps, divid_cash_stock, divid_reserve_to_stock_ps)
+        VALUES (#{id}, #{code}, #{preNoticeDate,jdbcType=DATE}, #{agmAnnouncementDate}, #{planAnnounceDate}, #{planDate}, #{registerDate}, #{operateDate}, #{payDate}, #{marketDate,jdbcType=DATE}, #{cashPerShareBeforeTax}, #{cashPerShareAfterTax,jdbcType=VARCHAR}, #{stockPerShare}, #{cashStock,jdbcType=VARCHAR}, #{divid_reserve_to_stock_ps,jdbcType=VARCHAR})
+    </insert>
+
+</mapper>

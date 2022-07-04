@@ -4,5 +4,5 @@ import java.util.List;
 
 public interface PotentialStockService {
 
-    List<IndustryEntity> top(int total, int industryMax, int industryMin);
+    List<StockEntity> top(int total, int industryMax);
 }

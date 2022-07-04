@@ -136,17 +136,17 @@ public class QueryHistoryKDataPlusResponse extends BaoStockResponse {
         /**
          * 成交量（累计 单位：股）
          */
-        private final long volume;
+        private Long volume;
 
         /**
          * 成交额（单位：人民币元）
          */
-        private final BigDecimal amount;
+        private BigDecimal amount;
 
         /**
          * 复权状态(1：后复权， 2：前复权，3：不复权）
          */
-        private final int adjustflag;
+        private final int adjustFlag;
 
         /**
          * 换手率: [指定交易日的成交量(股)/指定交易日的股票的流通股总股数(股)]*100%
@@ -203,9 +203,15 @@ public class QueryHistoryKDataPlusResponse extends BaoStockResponse {
             if(frequency == Frequency.DAY) {
                 preClose = new BigDecimal(data[index++]);
             }
-            volume = Long.parseLong(data[index++]);
-            amount = new BigDecimal(data[index++]);
-            adjustflag = Integer.parseInt(data[index++]);
+            if(data[index] != null && data[index].length() > 0) {
+                volume = Long.parseLong(data[index]);
+            }
+            index++;
+            if(data[index] != null && data[index].length() > 0) {
+                amount = new BigDecimal(data[index]);
+            }
+            index++;
+            adjustFlag = Integer.parseInt(data[index++]);
             if(frequency == Frequency.DAY || frequency == Frequency.WEEK || frequency == Frequency.MONTH) {
                 if(data[index] != null && data[index].length() > 0) {
                     turn = new BigDecimal(data[index++]);
@@ -216,7 +222,10 @@ public class QueryHistoryKDataPlusResponse extends BaoStockResponse {
                 if(frequency == Frequency.DAY) {
                     tradeStatus = Integer.parseInt(data[index++]);
                 }
-                pctChg = new BigDecimal(data[index++]);
+                if(data[index] != null && data[index].length() > 0) {
+                    pctChg = new BigDecimal(data[index]);
+                }
+                index++;
                 if(frequency == Frequency.DAY) {
                     peTTM = new BigDecimal(data[index++]);
                     psTTM = new BigDecimal(data[index++]);

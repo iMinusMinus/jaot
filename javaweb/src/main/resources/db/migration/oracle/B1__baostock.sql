@@ -576,6 +576,193 @@ alter table BAO_STOCK_DUPONT_DATA
 
 
 
+-- Create sequence
+create sequence SEQ_BAO_STOCK_K_DATA
+    minvalue 1
+    maxvalue 9223372036854775807
+    start with 1
+    increment by 1
+    cache 100;
+-- Create table
+create table BAO_STOCK_K_DATA
+(
+    id           NUMBER not null,
+    code         VARCHAR2(9) not null,
+    quote_date   DATE not null,
+    time         TIMESTAMP(3),
+    open         NUMBER(12,4) not null,
+    high         NUMBER(12,4) not null,
+    low          NUMBER(12,4) not null,
+    close        NUMBER(12,4) not null,
+    pre_close    NUMBER(12,4),
+    volume       NUMBER(12),
+    amount       NUMBER(20,4),
+    adjust_flag  NUMBER(1) not null,
+    turn         NUMBER(10,6),
+    trade_status NUMBER(1),
+    pct_chg      NUMBER(10,6),
+    pe_ttm       NUMBER(24,6),
+    pb_mrq       NUMBER(10,6),
+    ps_ttm       NUMBER(24,6),
+    pcf_ncf_ttm  NUMBER(24,6),
+    is_st        NUMBER(1) not null
+)
+    tablespace STOCK
+  pctfree 10
+  initrans 1
+  maxtrans 255
+  storage
+  (
+    initial 64K
+    minextents 1
+    maxextents unlimited
+  );
+-- Add comments to the table
+comment on table BAO_STOCK_K_DATA
+  is 'A股K线数据';
+-- Add comments to the columns
+comment on column BAO_STOCK_K_DATA.code
+  is '证券代码';
+comment on column BAO_STOCK_K_DATA.quote_date
+  is '交易所行情日期';
+comment on column BAO_STOCK_K_DATA.time
+  is '交易所行情时间';
+comment on column BAO_STOCK_K_DATA.open
+  is '开盘价';
+comment on column BAO_STOCK_K_DATA.high
+  is '最高价	';
+comment on column BAO_STOCK_K_DATA.low
+  is '最低价';
+comment on column BAO_STOCK_K_DATA.close
+  is '收盘价';
+comment on column BAO_STOCK_K_DATA.pre_close
+  is '前收盘价';
+comment on column BAO_STOCK_K_DATA.volume
+  is '成交量（累计 单位：股）';
+comment on column BAO_STOCK_K_DATA.amount
+  is '成交额（单位：人民币元）';
+comment on column BAO_STOCK_K_DATA.adjust_flag
+  is '复权状态(1：后复权， 2：前复权，3：不复权）';
+comment on column BAO_STOCK_K_DATA.turn
+  is '换手率:[指定交易日的成交量(股)/指定交易日的股票的流通股总股数(股)]*100%';
+comment on column BAO_STOCK_K_DATA.trade_status
+  is '交易状态(1：正常交易 0：停牌）。股票停牌时，对于日线，开、高、低、收价都相同，且都为前一交易日的收盘价，成交量、成交额为0，换手率为空';
+comment on column BAO_STOCK_K_DATA.pct_chg
+  is '涨跌幅（百分比）,日涨跌幅=[(指定交易日的收盘价-指定交易日前收盘价)/指定交易日前收盘价]*100%';
+comment on column BAO_STOCK_K_DATA.pe_ttm
+  is '滚动市盈率';
+comment on column BAO_STOCK_K_DATA.pb_mrq
+  is '市净率，(指定交易日的股票收盘价/指定交易日的每股净资产)=总市值/(最近披露的归属母公司股东的权益-其他权益工具)';
+comment on column BAO_STOCK_K_DATA.ps_ttm
+  is '滚动市销率，(指定交易日的股票收盘价/指定交易日的每股销售额)=(指定交易日的股票收盘价*截至当日公司总股本)/营业总收入TTM';
+comment on column BAO_STOCK_K_DATA.pcf_ncf_ttm
+  is '滚动市现率，(指定交易日的股票收盘价/指定交易日的每股现金流TTM)=(指定交易日的股票收盘价*截至当日公司总股本)/现金以及现金等价物净增加额TTM';
+comment on column BAO_STOCK_K_DATA.is_st
+  is '是否ST股，1是，0否';
+-- Create/Recreate indexes
+create index IDX_BAO_STOCK_K_DATA_CODE_DATE on BAO_STOCK_K_DATA (CODE, QUOTE_DATE)
+    tablespace STOCK
+  pctfree 10
+  initrans 2
+  maxtrans 255;
+-- Create/Recreate primary, unique and foreign key constraints
+alter table BAO_STOCK_K_DATA
+    add constraint PK_BAO_STOCK_K_DATA primary key (ID)
+    using index
+  tablespace STOCK
+  pctfree 10
+  initrans 2
+  maxtrans 255;
+
+
+
+-- Create sequence
+create sequence SEQ_BAO_STOCK_DIVIDEND_DATA
+    minvalue 1
+    maxvalue 9223372036854775807
+    start with 1
+    increment by 1
+    cache 100;
+-- Create table
+create table BAO_STOCK_DIVIDEND_DATA
+(
+    id                        NUMBER not null,
+    code                      VARCHAR2(9) not null,
+    divid_pre_notice_date     DATE,
+    divid_agm_pum_date        DATE not null,
+    divid_plan_announce_date  DATE not null,
+    divid_plan_date           DATE not null,
+    divid_regist_date         DATE not null,
+    divid_operate_date        DATE not null,
+    divid_pay_date            DATE not null,
+    divid_stock_market_date   DATE,
+    divid_cash_ps_before_tax  NUMBER not null,
+    divid_cash_ps_after_tax   VARCHAR2(64),
+    divid_stocks_ps           NUMBER,
+    divid_cash_stock          VARCHAR2(64),
+    divid_reserve_to_stock_ps NUMBER
+)
+    tablespace STOCK
+  pctfree 10
+  initrans 1
+  maxtrans 255
+  storage
+  (
+    initial 64K
+    minextents 1
+    maxextents unlimited
+  );
+-- Add comments to the table
+comment on table BAO_STOCK_DIVIDEND_DATA
+  is '除权除息信息';
+-- Add comments to the columns
+comment on column BAO_STOCK_DIVIDEND_DATA.code
+  is '证券代码  ';
+comment on column BAO_STOCK_DIVIDEND_DATA.divid_pre_notice_date
+  is '预批露公告日';
+comment on column BAO_STOCK_DIVIDEND_DATA.divid_agm_pum_date
+  is '股东大会公告日期  ';
+comment on column BAO_STOCK_DIVIDEND_DATA.divid_plan_announce_date
+  is '预案公告日 ';
+comment on column BAO_STOCK_DIVIDEND_DATA.divid_plan_date
+  is '分红实施公告日 ';
+comment on column BAO_STOCK_DIVIDEND_DATA.divid_regist_date
+  is '股权登记告日  ';
+comment on column BAO_STOCK_DIVIDEND_DATA.divid_operate_date
+  is '除权除息日期  ';
+comment on column BAO_STOCK_DIVIDEND_DATA.divid_pay_date
+  is '派息日 ';
+comment on column BAO_STOCK_DIVIDEND_DATA.divid_stock_market_date
+  is '红股上市交易日 ';
+comment on column BAO_STOCK_DIVIDEND_DATA.divid_cash_ps_before_tax
+  is '每股股利税前';
+comment on column BAO_STOCK_DIVIDEND_DATA.divid_cash_ps_after_tax
+  is '每股股利税后  ，按持有1年以上计';
+comment on column BAO_STOCK_DIVIDEND_DATA.divid_stocks_ps
+  is '每股红股  ';
+comment on column BAO_STOCK_DIVIDEND_DATA.divid_cash_stock
+  is '分红送转';
+comment on column BAO_STOCK_DIVIDEND_DATA.divid_reserve_to_stock_ps
+  is '每股转增资本  ';
+-- Create/Recreate indexes
+create index IDX_BAO_STOCK_DIVIDEND_DATA_CODE on BAO_STOCK_DIVIDEND_DATA (CODE, DIVID_PAY_DATE)
+    tablespace STOCK
+  pctfree 10
+  initrans 2
+  maxtrans 255;
+-- Create/Recreate primary, unique and foreign key constraints
+alter table BAO_STOCK_DIVIDEND_DATA
+    add constraint PK_BAO_STOCK_DIVIDEND_DATA primary key (ID)
+    using index
+  tablespace STOCK
+  pctfree 10
+  initrans 2
+  maxtrans 255;
+
+
+
+
+
 
 -- Oracle Advanced Queue
 /*

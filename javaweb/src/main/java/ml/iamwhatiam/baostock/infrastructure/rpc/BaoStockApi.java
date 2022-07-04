@@ -45,6 +45,15 @@ public interface BaoStockApi {
     QueryStockIndexResponse queryIndexStock(QueryStockIndexRequest request);
 
     /**
+     * 除权除息信息
+     * 通过API接口获取除权除息信息数据（预披露、预案、正式都已通过）
+     *
+     * @param request 证券代码，年份，预案/已执行
+     * @return 日期，除权除息值
+     */
+    QueryDividendDataResponse queryDividendData(QueryDividendDataRequest request);
+
+    /**
      * 季频盈利能力
      * 通过API接口获取季频盈利能力信息，可以通过参数设置获取对应年份、季度数据，提供2007年至今数据
      * @param request 股票代码，可指定年份和季度
@@ -95,6 +104,8 @@ public interface BaoStockApi {
     /**
      * 获取历史A股K线数据:
      * 通过API接口获取A股历史交易数据，可以通过参数设置获取日k线、周k线、月k线，以及5分钟、15分钟、30分钟和60分钟k线数据，适合搭配均线数据进行选股和分析
+     * “分钟线”不包含指数
+     * 周线每周最后一个交易日才可以获取，月线每月最后一个交易日才可以获取
      * @param request 必须指定股票代码，可指定开始日期和结束日期，可指定频率、复权类型
      * @return 股票k线数据
      */

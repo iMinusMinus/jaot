@@ -17,6 +17,9 @@ public final class ResultFactory {
             case Constants.MESSAGE_TYPE_QUERYSTOCKINDUSTRY_RESPONSE:
                     result = new QueryStockIndustryResponse(headerArray, bodyArray);
                     break;
+            case Constants.MESSAGE_TYPE_QUERYDIVIDENDDATA_RESPONSE:
+                    result = new QueryDividendDataResponse(headerArray, bodyArray);
+                    break;
             case Constants.MESSAGE_TYPE_QUERYSZ50STOCKS_RESPONSE: // pass through
             case Constants.MESSAGE_TYPE_QUERYHS300STOCKS_RESPONSE: // pass through
             case Constants.MESSAGE_TYPE_QUERYZZ500STOCKS_RESPONSE:

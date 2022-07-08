@@ -10,6 +10,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+@ToString(callSuper = true)
 public class QueryDividendDataResponse extends BaoStockResponse {
 
     @Getter
@@ -65,7 +66,7 @@ public class QueryDividendDataResponse extends BaoStockResponse {
         /**
          * 股东大会公告日期
          */
-        private final LocalDate dividAgmPumDate;
+        private LocalDate dividAgmPumDate;
 
         /**
          * 预案公告日
@@ -80,17 +81,17 @@ public class QueryDividendDataResponse extends BaoStockResponse {
         /**
          * 股权登记告日
          */
-        private final LocalDate dividRegistDate;
+        private LocalDate dividRegistDate;
 
         /**
          * 除权除息日期
          */
-        private final LocalDate dividOperateDate;
+        private LocalDate dividOperateDate;
 
         /**
          * 派息日
          */
-        private final LocalDate dividPayDate;
+        private LocalDate dividPayDate;
 
         /**
          * 红股上市交易日
@@ -127,18 +128,30 @@ public class QueryDividendDataResponse extends BaoStockResponse {
             if(data[1] != null && data[1].length() > 0) {
                 dividPreNoticeDate = LocalDate.parse(data[1], DateTimeFormatter.ISO_LOCAL_DATE);
             }
-            dividAgmPumDate = LocalDate.parse(data[2], DateTimeFormatter.ISO_LOCAL_DATE);
+            if(data[2] != null && data[2].length() > 0) {
+                dividAgmPumDate = LocalDate.parse(data[2], DateTimeFormatter.ISO_LOCAL_DATE);
+            }
             dividPlanAnnounceDate = LocalDate.parse(data[3], DateTimeFormatter.ISO_LOCAL_DATE);
             dividPlanDate = LocalDate.parse(data[4], DateTimeFormatter.ISO_LOCAL_DATE);
-            dividRegistDate = LocalDate.parse(data[5], DateTimeFormatter.ISO_LOCAL_DATE);
-            dividOperateDate = LocalDate.parse(data[6], DateTimeFormatter.ISO_LOCAL_DATE);
-            dividPayDate = LocalDate.parse(data[7], DateTimeFormatter.ISO_LOCAL_DATE);
+            if(data[5] != null && data[5].length() > 0) {
+                dividRegistDate = LocalDate.parse(data[5], DateTimeFormatter.ISO_LOCAL_DATE);
+            }
+            if(data[6] != null && data[6].length() > 0) {
+                dividOperateDate = LocalDate.parse(data[6], DateTimeFormatter.ISO_LOCAL_DATE);
+            }
+            if(data[7] != null && data[7].length() > 0) {
+                dividPayDate = LocalDate.parse(data[7], DateTimeFormatter.ISO_LOCAL_DATE);
+            }
             if(data[8] != null && data[8].length() > 0) {
                 dividStockMarketDate = LocalDate.parse(data[8], DateTimeFormatter.ISO_LOCAL_DATE);
             }
-            dividCashPsBeforeTax = new BigDecimal(data[9]);
+            if(data[9] != null && data[9].length() > 0) {
+                dividCashPsBeforeTax = new BigDecimal(data[9]);
+            }
             dividCashPsAfterTax = data[10];
-            dividStocksPs = new BigDecimal(data[11]);
+            if(data[11] != null && data[11].length() > 0) {
+                dividStocksPs = new BigDecimal(data[11]);
+            }
             dividCashStock = data[12];
             if(data[13] != null && data[13].length() > 0) {
                 dividReserveToStockPs = new BigDecimal(data[13]);

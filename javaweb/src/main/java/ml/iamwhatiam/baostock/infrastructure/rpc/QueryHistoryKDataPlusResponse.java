@@ -111,22 +111,22 @@ public class QueryHistoryKDataPlusResponse extends BaoStockResponse {
         /**
          * 开盘价
          */
-        private final BigDecimal open;
+        private BigDecimal open;
 
         /**
          * 最高价
          */
-        private final BigDecimal high;
+        private BigDecimal high;
 
         /**
          * 最高价
          */
-        private final BigDecimal low;
+        private BigDecimal low;
 
         /**
          * 收盘价
          */
-        private final BigDecimal close;
+        private BigDecimal close;
 
         /**
          * 前收盘价
@@ -196,10 +196,22 @@ public class QueryHistoryKDataPlusResponse extends BaoStockResponse {
                 index++;
             }
             code = data[index++];
-            open = new BigDecimal(data[index++]);
-            high = new BigDecimal(data[index++]);
-            low = new BigDecimal(data[index++]);
-            close = new BigDecimal(data[index++]);
+            if(data[index] != null && data[index].length() > 0) {
+                open = new BigDecimal(data[index]);
+            }
+            index++;
+            if(data[index] != null && data[index].length() > 0) {
+                high = new BigDecimal(data[index]);
+            }
+            index++;
+            if(data[index] != null && data[index].length() > 0) {
+                low = new BigDecimal(data[index]);
+            }
+            index++;
+            if(data[index] != null && data[index].length() > 0) {
+                close = new BigDecimal(data[index]);
+            }
+            index++;
             if(frequency == Frequency.DAY) {
                 preClose = new BigDecimal(data[index++]);
             }
@@ -227,10 +239,22 @@ public class QueryHistoryKDataPlusResponse extends BaoStockResponse {
                 }
                 index++;
                 if(frequency == Frequency.DAY) {
-                    peTTM = new BigDecimal(data[index++]);
-                    psTTM = new BigDecimal(data[index++]);
-                    pcfNcfTTM = new BigDecimal(data[index++]);
-                    pbMRQ = new BigDecimal(data[index++]);
+                    if(data[index] != null && data[index].length() > 0) {
+                        peTTM = new BigDecimal(data[index]);
+                    }
+                    index++;
+                    if(data[index] != null && data[index].length() > 0) {
+                        psTTM = new BigDecimal(data[index]);
+                    }
+                    index++;
+                    if(data[index] != null && data[index].length() > 0) {
+                        pcfNcfTTM = new BigDecimal(data[index]);
+                    }
+                    index++;
+                    if(data[index] != null && data[index].length() > 0) {
+                        pbMRQ = new BigDecimal(data[index]);
+                    }
+                    index++;
                     st = Boolean.parseBoolean(data[index]);
                 }
             }

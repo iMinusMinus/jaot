@@ -590,10 +590,10 @@ create table BAO_STOCK_K_DATA
     code         VARCHAR2(9) not null,
     quote_date   DATE not null,
     time         TIMESTAMP(3),
-    open         NUMBER(12,4) not null,
-    high         NUMBER(12,4) not null,
-    low          NUMBER(12,4) not null,
-    close        NUMBER(12,4) not null,
+    open         NUMBER(12,4),
+    high         NUMBER(12,4),
+    low          NUMBER(12,4),
+    close        NUMBER(12,4),
     pre_close    NUMBER(12,4),
     volume       NUMBER(12),
     amount       NUMBER(20,4),
@@ -602,10 +602,11 @@ create table BAO_STOCK_K_DATA
     trade_status NUMBER(1),
     pct_chg      NUMBER(10,6),
     pe_ttm       NUMBER(24,6),
-    pb_mrq       NUMBER(10,6),
+    pb_mrq       NUMBER(16,6),
     ps_ttm       NUMBER(24,6),
     pcf_ncf_ttm  NUMBER(24,6),
-    is_st        NUMBER(1) not null
+    is_st        NUMBER(1) not null,
+    frequency    VARCHAR2(2) not null
 )
     tablespace STOCK
   pctfree 10
@@ -689,17 +690,17 @@ create table BAO_STOCK_DIVIDEND_DATA
     id                        NUMBER not null,
     code                      VARCHAR2(9) not null,
     divid_pre_notice_date     DATE,
-    divid_agm_pum_date        DATE not null,
+    divid_agm_pum_date        DATE,
     divid_plan_announce_date  DATE not null,
     divid_plan_date           DATE not null,
-    divid_regist_date         DATE not null,
-    divid_operate_date        DATE not null,
-    divid_pay_date            DATE not null,
+    divid_regist_date         DATE,
+    divid_operate_date        DATE,
+    divid_pay_date            DATE,
     divid_stock_market_date   DATE,
-    divid_cash_ps_before_tax  NUMBER not null,
+    divid_cash_ps_before_tax  NUMBER,
     divid_cash_ps_after_tax   VARCHAR2(64),
     divid_stocks_ps           NUMBER,
-    divid_cash_stock          VARCHAR2(64),
+    divid_cash_stock          VARCHAR2(128),
     divid_reserve_to_stock_ps NUMBER
 )
     tablespace STOCK
@@ -717,35 +718,35 @@ comment on table BAO_STOCK_DIVIDEND_DATA
   is '除权除息信息';
 -- Add comments to the columns
 comment on column BAO_STOCK_DIVIDEND_DATA.code
-  is '证券代码  ';
+  is '证券代码';
 comment on column BAO_STOCK_DIVIDEND_DATA.divid_pre_notice_date
   is '预批露公告日';
 comment on column BAO_STOCK_DIVIDEND_DATA.divid_agm_pum_date
-  is '股东大会公告日期  ';
+  is '股东大会公告日期';
 comment on column BAO_STOCK_DIVIDEND_DATA.divid_plan_announce_date
-  is '预案公告日 ';
+  is '预案公告日';
 comment on column BAO_STOCK_DIVIDEND_DATA.divid_plan_date
-  is '分红实施公告日 ';
+  is '分红实施公告日';
 comment on column BAO_STOCK_DIVIDEND_DATA.divid_regist_date
-  is '股权登记告日  ';
+  is '股权登记告日';
 comment on column BAO_STOCK_DIVIDEND_DATA.divid_operate_date
-  is '除权除息日期  ';
+  is '除权除息日期';
 comment on column BAO_STOCK_DIVIDEND_DATA.divid_pay_date
-  is '派息日 ';
+  is '派息日';
 comment on column BAO_STOCK_DIVIDEND_DATA.divid_stock_market_date
   is '红股上市交易日 ';
 comment on column BAO_STOCK_DIVIDEND_DATA.divid_cash_ps_before_tax
   is '每股股利税前';
 comment on column BAO_STOCK_DIVIDEND_DATA.divid_cash_ps_after_tax
-  is '每股股利税后  ，按持有1年以上计';
+  is '每股股利税后';
 comment on column BAO_STOCK_DIVIDEND_DATA.divid_stocks_ps
-  is '每股红股  ';
+  is '每股红股';
 comment on column BAO_STOCK_DIVIDEND_DATA.divid_cash_stock
   is '分红送转';
 comment on column BAO_STOCK_DIVIDEND_DATA.divid_reserve_to_stock_ps
-  is '每股转增资本  ';
+  is '每股转增资本';
 -- Create/Recreate indexes
-create index IDX_BAO_STOCK_DIVIDEND_DATA_CODE on BAO_STOCK_DIVIDEND_DATA (CODE, DIVID_PAY_DATE)
+create index IDX_BAO_STOCK_DIVIDEND_DATA on BAO_STOCK_DIVIDEND_DATA (CODE, DIVID_PAY_DATE)
     tablespace STOCK
   pctfree 10
   initrans 2

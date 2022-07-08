@@ -134,31 +134,46 @@ public class StockDataJob {
         Map<String, DividendDataObject> latestDividendData = dividendMapper.findLatest().stream().collect(Collectors.toMap(DividendDataObject::getCode, Function.identity()));
         for(Map.Entry<String, LocalDate> pair : stockDataObjects.entrySet()) {
             DividendDataObject history = latestDividendData.get(pair.getKey());
-            int year = pair.getValue().getYear();
+            int startYear = pair.getValue().getYear();
             if(history != null) {
-                year = history.getPlanDate().getYear(); // XXX
+                startYear = history.getPlanDate().getYear(); // only planAnnounceDate, planDate not null
             }
-            QueryDividendDataResponse response = baoStockApi.queryDividendData(new QueryDividendDataRequest(accessToken, pair.getKey(), Year.of(year)));
-            if(!handleRemoteResult(Constants.MESSAGE_TYPE_QUERYDIVIDENDDATA_REQUEST, response)) {
+            int endYear = Year.now().getValue();
+            if(startYear >= endYear) {
                 continue;
             }
             int effect = 0;
-            for(QueryDividendDataResponse.Dividend dividend : response.getData()) {
-                DividendDataObject dividendDataObject = new DividendDataObject();
-                dividendDataObject.setCode(dividend.getCode());
-                dividendDataObject.setPreNoticeDate(dividend.getDividPreNoticeDate());
-                dividendDataObject.setAgmAnnouncementDate(dividend.getDividAgmPumDate());
-                dividendDataObject.setPlanAnnounceDate(dividend.getDividPlanAnnounceDate());
-                dividendDataObject.setPlanDate(dividend.getDividPlanDate());
-                dividendDataObject.setRegisterDate(dividend.getDividRegistDate());
-                dividendDataObject.setPayDate(dividend.getDividPayDate());
-                dividendDataObject.setMarketDate(dividend.getDividStockMarketDate());
-                dividendDataObject.setCashPerShareBeforeTax(dividend.getDividCashPsBeforeTax());
-                dividendDataObject.setCashPerShareAfterTax(dividend.getDividCashPsAfterTax());
-                dividendDataObject.setStockPerShare(dividend.getDividStocksPs());
-                dividendDataObject.setCashStock(dividend.getDividCashStock());
-                dividendDataObject.setReserveToStockPerShare(dividend.getDividReserveToStockPs());
-                effect += dividendMapper.insert(dividendDataObject);
+            for(int queryYear = startYear; queryYear < endYear; queryYear++) {
+                QueryDividendDataResponse response = baoStockApi.queryDividendData(new QueryDividendDataRequest(accessToken, pair.getKey(), Year.of(queryYear)));
+                if (!handleRemoteResult(Constants.MESSAGE_TYPE_QUERYDIVIDENDDATA_REQUEST, response)) {
+                    continue;
+                }
+                if(response.getData() != null && response.getData().size() > 1) {
+                    log.warn("stock [{}] published {} dividend data at {}", pair.getKey(), response.getData().size(), queryYear);
+                }
+                for (QueryDividendDataResponse.Dividend dividend : response.getData()) {
+                    DividendDataObject dividendDataObject = new DividendDataObject();
+                    dividendDataObject.setCode(dividend.getCode());
+                    dividendDataObject.setPreNoticeDate(dividend.getDividPreNoticeDate());
+                    dividendDataObject.setAgmAnnouncementDate(dividend.getDividAgmPumDate());
+                    dividendDataObject.setPlanAnnounceDate(dividend.getDividPlanAnnounceDate());
+                    dividendDataObject.setPlanDate(dividend.getDividPlanDate());
+                    dividendDataObject.setRegisterDate(dividend.getDividRegistDate());
+                    dividendDataObject.setPayDate(dividend.getDividPayDate());
+                    dividendDataObject.setMarketDate(dividend.getDividStockMarketDate());
+                    dividendDataObject.setCashPerShareBeforeTax(dividend.getDividCashPsBeforeTax());
+                    dividendDataObject.setCashPerShareAfterTax(dividend.getDividCashPsAfterTax());
+                    dividendDataObject.setStockPerShare(dividend.getDividStocksPs());
+                    dividendDataObject.setCashStock(dividend.getDividCashStock());
+                    dividendDataObject.setReserveToStockPerShare(dividend.getDividReserveToStockPs());
+                    try {
+                        effect += dividendMapper.insert(dividendDataObject);
+                    } catch (Exception e) {
+                        log.error("{}", dividend);
+                        log.error(e.getMessage(), e);
+                        throw e;
+                    }
+                }
             }
             if(effect != 0) {
                 log.info("add '{}' dividend data for [{}]", effect, pair.getKey());
@@ -176,7 +191,7 @@ public class StockDataJob {
             if(latestKDataObjects != null && !latestKDataObjects.isEmpty()) {
                 for (KDataObject k : latestKDataObjects) {
                     QueryHistoryKDataPlusResponse.Frequency frequency = QueryHistoryKDataPlusResponse.Frequency.getInstance(k.getFrequency());
-                    int effect = addKPlusData(pair.getKey(), k.getDate().plusDays(1), frequency);
+                    int effect = addKPlusData(pair.getKey(), k.getDate().plusDays(baoStockProperties.getUpdateInterval()), frequency);
                     if (QueryHistoryKDataPlusResponse.Frequency.DAY == frequency) {
                         missingDayFrequency = false;
                         daily += effect;

@@ -2,6 +2,7 @@ package ml.iamwhatiam.baostock.domain;
 
 import lombok.extern.slf4j.Slf4j;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -38,41 +39,31 @@ public class PotentialStockServiceImpl implements PotentialStockService {
         if(total > stocks.size()) {
             log.info("top rank exceed: N={}, stock quantity is {} ", total, stocks.size());
         }
-        Collections.sort(stocks, (prev, next) -> {
-            if(prev.getProfit() != next.getProfit()) {
-                return prev.getProfit() - next.getProfit();
-            }
-            if(prev.getRevenue() != next.getRevenue()) {
-                return prev.getRevenue() - next.getRevenue();
-            }
-            if(prev.getOpportunities() != null && next.getOpportunities() == null) {
-                return 1;
-            }
-            if(prev.getOpportunities() == null && next.getOpportunities() != null) {
-                return -1;
-            }
-            if(prev.getOpportunities() != null && next.getOpportunities() != null) {
-                return prev.getOpportunities().get(0).getGrow().subtract(next.getOpportunities().get(0).getGrow()).intValue();
-            }
-            if(prev.getRisks() != null && next.getRisks() == null) {
-                return -1;
-            }
-            if(prev.getRisks() == null && next.getRisks() != null) {
-                return 1;
-            }
-            return 0;
-        });
+        Collections.sort(stocks, (prev, next) ->
+            prev.getValue().getPe().subtract(next.getValue().getPe()).intValue()
+                    + prev.getValue().getPb().subtract(next.getValue().getPb()).intValue()
+        );
         Map<String, Integer> counter = new HashMap<>();
         // 2. 股票放到排行榜（行业已超出限制数量除外）
         List<StockEntity> result = new ArrayList<>(total);
-        for(int i = stocks.size() - 1; i > 0 && result.size() < total; i--) {
+        for(int i = 0; i < stocks.size() && result.size() < total; i++) {
             StockEntity stock = stocks.get(i);
+            // 亏损的去除
+            if(stock.getValue().getPe().compareTo(BigDecimal.ZERO) < 0
+                    || stock.getValue().getPb().compareTo(BigDecimal.ZERO) < 0) {
+                continue;
+            }
             IndustryEntity industry = relations.get(stock.getCode());
+            if(stock.getValue().getPe().compareTo(industry.getAvgPe()) > 0
+                || stock.getValue().getPb().compareTo(industry.getAvgPb()) > 0) {
+                log.info("stock [{}] pe/pb [{}/{}] great than industry average [{}/{}]", stock.getCode(), stock.getValue().getPe(), stock.getValue().getPb(), industry.getAvgPe(), industry.getAvgPb());
+                continue;
+            }
             int currentQuantity = counter.getOrDefault(industry.getIndustry(), 0);
             if(currentQuantity < industryMax) {
                 result.add(stock);
+                counter.put(industry.getIndustry(), currentQuantity + 1);
             }
-            counter.put(industry.getIndustry(), currentQuantity + 1);
         }
         return result;
     }

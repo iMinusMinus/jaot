@@ -19,7 +19,7 @@
         <result column="pb_mrq" property="mostRecentQuarterPriceToBookRatio" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
         <result column="ps_ttm" property="trailingTwelveMonthsPriceToSaleRatio" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
         <result column="pcf_ncf_ttm" property="trailingTwelveMonthsPriceToCashFlow" jdbcType="NUMERIC" javaType="java.math.BigDecimal" />
-        <result column="is_st" property="specialTreatment" jdbcType="INTEGER" javaType="java.time.LocalDate" />
+        <result column="is_st" property="specialTreatment" jdbcType="INTEGER" javaType="boolean" />
         <result column="frequency" property="frequency" jdbcType="VARCHAR" javaType="string" />
     </resultMap>
     <select id="findAll" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.KDataObject" resultMap="baseResultMap">
@@ -27,10 +27,28 @@
         FROM BAO_STOCK_K_DATA
     </select>
 
-    <select id="findLatest" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.KDataObject" resultMap="baseResultMap">
-        SELECT code, max(quote_date) quote_date, frequency
-        FROM BAO_STOCK_K_DATA
-        GROUP BY  code, frequency
+    <select id="findLatest" parameterType="java.util.Map" resultMap="baseResultMap">
+        select id, k.code code, k.quote_date quote_date, time, open, high, low, close, pre_close, volume, amount, adjust_flag, turn, trade_status, pct_chg, pe_ttm, pb_mrq, ps_ttm, pcf_ncf_ttm, is_st, frequency
+        from BAO_STOCK_K_DATA k,
+             (SELECT code, max(quote_date) quote_date
+              FROM BAO_STOCK_K_DATA
+              <where>
+                  <if test="code != null">
+                      code = #{code}
+                  </if>
+                  <if test="tradeStatus != null">
+                    AND trade_status = #{tradeStatus}
+                  </if>
+                  <if test="frequency != null">
+                    AND frequency = #{frequency}
+                  </if>
+              </where>
+              GROUP BY code) t
+        where k.code = t.code
+          and k.quote_date = t.quote_date
+        <if test="frequency != null">
+          and k.frequency = #{frequency}
+        </if>
     </select>
 
     <insert id="insert" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.KDataObject">

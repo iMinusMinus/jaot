@@ -182,7 +182,8 @@ public class StockDataJob {
     }
 
     private void addKPlusData(Map<String, LocalDate> stockDataObjects) {
-        Map<String, List<KDataObject>> kDataObjects = kMapper.findLatest().stream().collect(Collectors.groupingBy(KDataObject::getCode, Collectors.toList()));
+        Map<String, List<KDataObject>> kDataObjects = kMapper.findLatest(null, null, null)
+                .stream().collect(Collectors.groupingBy(KDataObject::getCode, Collectors.toList()));
         int daily = 0, weekly = 0, monthly = 0;
         for(Map.Entry<String, LocalDate> pair : stockDataObjects.entrySet()) {
             List<KDataObject> latestKDataObjects = kDataObjects.get(pair.getKey());

@@ -674,6 +674,8 @@ alter table BAO_STOCK_K_DATA
   pctfree 10
   initrans 2
   maxtrans 255;
+alter table BAO_STOCK_K_DATA
+    add constraint UK_BAO_STOCK_K_DATA unique (CODE, QUOTE_DATE, FREQUENCY, TIME);
 
 
 
@@ -759,6 +761,45 @@ alter table BAO_STOCK_DIVIDEND_DATA
   pctfree 10
   initrans 2
   maxtrans 255;
+
+
+
+
+
+-- 清理重复K线数据
+declare
+type k_data_type is record(
+    code bao_stock_k_data.code%type);
+cursor stocks is
+select code from bao_stock_basic;
+stock k_data_type;
+begin
+for stock in stocks loop
+delete from bao_stock_k_data
+where code = stock.code
+  and frequency in ('w', 'm')
+  and id not in
+      (select id
+       from (select min(t.id) id, t.code, t.quote_date, t.frequency
+             from bao_stock_k_data t
+             where t.frequency in ('w', 'm')
+               and t.code = stock.code
+             group by code, quote_date, frequency))
+  and id in (select id
+             from bao_stock_k_data o
+             where exists (select 1
+                           from (select quote_date, frequency
+                                 from bao_stock_k_data
+                                 where frequency in ('w', 'm')
+                                   and code = stock.code
+                                 group by quote_date, frequency
+                                 having count(*) > 1) i
+                           where o.code = stock.code
+                             and i.quote_date = o.quote_date
+                             and i.frequency = o.frequency));
+commit;
+end loop;
+end;
 
 
 

@@ -46,6 +46,7 @@ import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.Year;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -182,14 +183,21 @@ public class StockDataJob {
     }
 
     private void addKPlusData(Map<String, LocalDate> stockDataObjects) {
-        Map<String, List<KDataObject>> kDataObjects = kMapper.findLatest(null, null, null)
-                .stream().collect(Collectors.groupingBy(KDataObject::getCode, Collectors.toList()));
+        Map<String, KDataObject> dailyData = kMapper.findLatest(null, QueryHistoryKDataPlusResponse.Frequency.DAY.getFrequency(), null)
+                .stream().collect(Collectors.toMap(KDataObject::getCode, Function.identity()));
+        Map<String, KDataObject> weeklyData = kMapper.findLatest(null, QueryHistoryKDataPlusResponse.Frequency.WEEK.getFrequency(), null)
+                .stream().collect(Collectors.toMap(KDataObject::getCode, Function.identity()));
+        Map<String, KDataObject> monthlyData = kMapper.findLatest(null, QueryHistoryKDataPlusResponse.Frequency.MONTH.getFrequency(), null)
+                .stream().collect(Collectors.toMap(KDataObject::getCode, Function.identity()));
         int daily = 0, weekly = 0, monthly = 0;
         for(Map.Entry<String, LocalDate> pair : stockDataObjects.entrySet()) {
-            List<KDataObject> latestKDataObjects = kDataObjects.get(pair.getKey());
+            KDataObject latestDayData = dailyData.get(pair.getKey());
+            KDataObject latestWeekData = weeklyData.get(pair.getKey());
+            KDataObject latestMonthData = monthlyData.get(pair.getKey());
+            List<KDataObject> latestKDataObjects = Arrays.asList(latestDayData, latestWeekData, latestMonthData);
             // 1. 历史数据存在
             boolean missingDayFrequency = true, missingWeekFrequency = true, missingMonthFrequency = true;
-            if(latestKDataObjects != null && !latestKDataObjects.isEmpty()) {
+            if(!latestKDataObjects.isEmpty()) {
                 for (KDataObject k : latestKDataObjects) {
                     QueryHistoryKDataPlusResponse.Frequency frequency = QueryHistoryKDataPlusResponse.Frequency.getInstance(k.getFrequency());
                     int effect = addKPlusData(pair.getKey(), k.getDate().plusDays(baoStockProperties.getUpdateInterval()), frequency);

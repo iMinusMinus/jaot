@@ -51,6 +51,15 @@
         </if>
     </select>
 
+    <select id="extremum" parameterType="java.util.Map" resultMap="baseResultMap">
+        select code, MAX(high) high, MIN(low) low
+        from BAO_STOCK_K_DATA
+        where code = #{code}
+          and quote_date >= #{start}
+          and frequency = 'w'
+        group by code
+    </select>
+
     <insert id="insert" parameterType="ml.iamwhatiam.baostock.infrastructure.dao.KDataObject">
         INSERT INTO BAO_STOCK_K_DATA(code, quote_date, time, open, high, low, close, pre_close, volume, amount, adjust_flag, turn, trade_status, pct_chg, pe_ttm, pb_mrq, ps_ttm, pcf_ncf_ttm, is_st, frequency)
         VALUES (#{code}, #{date}, #{time,jdbcType=TIMESTAMP}, #{openingPrice,jdbcType=NUMERIC}, #{highPrice,jdbcType=NUMERIC}, #{lowPrice,jdbcType=NUMERIC}, #{closingPrice,jdbcType=NUMERIC}, #{preClosePrice,jdbcType=NUMERIC}, #{volume,jdbcType=INTEGER}, #{amount,jdbcType=NUMERIC}, #{adjustFlag}, #{turn,jdbcType=NUMERIC}, #{tradeStatus}, #{changePercent,jdbcType=NUMERIC}, #{trailingTwelveMonthsPriceToEarningRatio,jdbcType=NUMERIC}, #{mostRecentQuarterPriceToBookRatio,jdbcType=NUMERIC}, #{trailingTwelveMonthsPriceToSaleRatio,jdbcType=NUMERIC}, #{trailingTwelveMonthsPriceToCashFlow,jdbcType=NUMERIC}, #{specialTreatment}, #{frequency})

@@ -12,6 +12,21 @@ import java.math.BigDecimal;
 public class StockValue extends AbstractValueObject {
 
     /**
+     * 历史高价
+     */
+    private BigDecimal highPrice;
+
+    /**
+     * 历史低价
+     */
+    private BigDecimal lowPrice;
+
+    /**
+     * 当前股价
+     */
+    private BigDecimal price;
+
+    /**
      * 每股当前利润需要多少年才能达到每股当前价格
      */
     private BigDecimal pe;

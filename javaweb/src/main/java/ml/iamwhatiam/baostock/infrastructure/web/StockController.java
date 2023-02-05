@@ -1,6 +1,7 @@
 package ml.iamwhatiam.baostock.infrastructure.web;
 
 import ml.iamwhatiam.baostock.domain.PotentialStockService;
+import ml.iamwhatiam.baostock.domain.StockEntity;
 import ml.iamwhatiam.baostock.infrastructure.BaoStockProperties;
 import ml.iamwhatiam.baostock.infrastructure.rpc.BaoStockApi;
 import ml.iamwhatiam.baostock.infrastructure.rpc.LoginRequest;
@@ -19,9 +20,11 @@ import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Predicate;
 
 @Controller
 @RequestMapping("/stock")
@@ -45,12 +48,24 @@ public class StockController {
 
     @GetMapping("/topN")
     @ResponseBody
-    public List<StockVO> topN(StockVO condition) {
-        int n = 10;
-        if(condition != null && condition.getPosition() != null) {
-            n = condition.getPosition();
+    public List<StockVO> topN(PreconditionVO condition) {
+        int n = condition.getN();
+        Predicate<StockEntity> filter = PotentialStockService.TRADEABLE;
+        if (condition.getInitialFilter() == 0) {
+            filter = filter.and(PotentialStockService.IPO_FILTER.negate());
         }
-        List<StockVO> result = StockAssembler.convert(potentialStockService.top(n, 3));
+        if (condition.getIndexFilter() == 1) {
+            filter = filter.and(PotentialStockService.SZ50_FILTER);
+        } else if (condition.getIndexFilter() == 7) {
+            filter = filter.and(PotentialStockService.INDEX_FILTER);
+        }
+        // TODO 混合pe、pb与当前股价/历史股价来进行排序
+        Comparator<StockEntity> comparator = PotentialStockService.DOWN_POTENTIAL
+                .thenComparing(PotentialStockService.UP_POTENTIAL)
+                .thenComparing(PotentialStockService.PE)
+                .thenComparing(PotentialStockService.PB)
+                .thenComparing(StockEntity::getCode);
+        List<StockVO> result = StockAssembler.convert(potentialStockService.top(n, filter, comparator));
         Collections.sort(result);
         return result;
     }

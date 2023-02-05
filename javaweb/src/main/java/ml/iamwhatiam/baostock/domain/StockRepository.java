@@ -5,4 +5,6 @@ import java.util.List;
 public interface StockRepository {
 
     List<IndustryEntity> load();
+
+    boolean fillValue(StockEntity stock);
 }

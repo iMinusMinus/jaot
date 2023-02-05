@@ -39,7 +39,7 @@ public class KDataObject extends AbstractDataObject {
     private BigDecimal highPrice;
 
     /**
-     * 最高价
+     * 最低价
      */
     private BigDecimal lowPrice;
 

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -45,9 +46,19 @@ public class StockRepositoryImpl implements StockRepository {
                 data.put(industryDataObject.getIndustry(), industry);
             }
             StockDataObject stockDataObject = stockDataObjects.get(industryDataObject.getCode());
-            // 退市股不再关注
+            // 退市股不再关注(但baostock的query_stock_basic未返回退市信息)
             if(stockDataObject == null) {
                 log.debug("stock[{},{}] not exist in table 'BAO_STOCK_BASIC'", industryDataObject.getCode(), industryDataObject.getCodeName());
+                continue;
+            }
+
+            KDataObject k = kDataObjects.get(stockDataObject.getCode());
+            if (k == null) {
+                log.info("stock[{}] latest k data not found", stockDataObject.getCode());
+                continue;
+            }
+            if (k.getDate().isBefore(LocalDate.now().minusMonths(3))) {
+                log.warn("stock[{}] hasn't updated at least 3 month, last update date is [{}]", stockDataObject.getCode(), k.getDate());
                 continue;
             }
 
@@ -56,7 +67,7 @@ public class StockRepositoryImpl implements StockRepository {
                 stocks = new ArrayList<>();
                 industry.setStocks(stocks);
             }
-            StockEntity stock = convertStock(stockDataObject, kDataObjects.get(stockDataObject.getCode()));
+            StockEntity stock = convertStock(stockDataObject, k);
             stocks.add(stock);
         }
 
@@ -104,7 +115,24 @@ public class StockRepositoryImpl implements StockRepository {
         StockValue sv = new StockValue();
         sv.setPe(k.getTrailingTwelveMonthsPriceToEarningRatio());
         sv.setPb(k.getMostRecentQuarterPriceToBookRatio());
+        sv.setPrice(k.getClosingPrice());
         entity.setValue(sv);
         return entity;
+    }
+
+    @Override
+    public boolean fillValue(StockEntity stock) {
+        KDataObject kdata = kMapper.extremum(stock.getCode(), LocalDate.now().minusYears(10));
+        if (kdata == null) {
+            log.error("No k data found for '{}'", stock.getCode());
+            return false;
+        }
+        if (kdata.getLowPrice() == null || kdata.getLowPrice().compareTo(BigDecimal.ZERO) == 0
+                || kdata.getHighPrice() == null || kdata.getHighPrice().compareTo(BigDecimal.ZERO) == 0) {
+            log.warn("stock[{}] k data may be broken as high[{}] or low[{}] data corrupt", stock.getCode(), kdata.getHighPrice(), kdata.getLowPrice());
+        }
+        stock.getValue().setLowPrice(kdata.getLowPrice());
+        stock.getValue().setHighPrice(kdata.getHighPrice());
+        return true;
     }
 }

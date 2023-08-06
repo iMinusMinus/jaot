@@ -399,9 +399,14 @@ public class StockDataJob {
             if(!handleRemoteResult(indexType.getMethod(), recent)) {
                 continue;
             }
-            Map<String, StockIndexDataObject> old = recentAdded.stream()
-                    .filter(t -> t.getExclusionDate() == null) // 存在多次纳入/退出指数
-                    .collect(Collectors.toMap(StockIndexDataObject::getCode, Function.identity()));
+            Map<String, StockIndexDataObject> old = new HashMap<>(512);
+            int valid = 0;
+            for (StockIndexDataObject one : recentAdded) {
+                old.put(one.getCode(), one);
+                if (one.getExclusionDate() != null) {
+                    valid++;
+                }
+            }
             List<StockIndexDataObject> handled = new ArrayList<>();
             for(QueryStockIndexResponse.StockIndex stockIndex : recent.getData()) {
                 StockIndexDataObject exist = old.get(stockIndex.getCode());
@@ -414,7 +419,7 @@ public class StockDataJob {
                     index.setInclusionDate(stockIndex.getUpdateDate());
                     indexMapper.insert(index);
                     recentAdded.add(index);
-                } else {
+                } else if (exist.getExclusionDate() != null){ // 存在多次纳入/退出指数，对于已退出的，无需做任何处理，对于未退出的，标记更新时间
                     handled.add(exist);
                     StockIndexDataObject changed = new StockIndexDataObject();
                     changed.setId(exist.getId());
@@ -423,9 +428,12 @@ public class StockDataJob {
                 }
             }
             // 1. 基础数据为空，不做任何处理; 2. 上个周期指数股数据存在，更新日期为查询日期，并从指数列表清除
-            if(old.size() != handled.size()) {
+            if(valid != handled.size()) {
                 old.values().removeAll(handled);
                 for(StockIndexDataObject stockIndexDataObject : old.values()) {
+                    if (stockIndexDataObject.getExclusionDate() != null) {
+                        continue;
+                    }
                     StockIndexDataObject exclude = new StockIndexDataObject();
                     exclude.setId(stockIndexDataObject.getId());
                     exclude.setExclusionDate(queryFrom.minusMonths(indexType.getFrequency())); // XXX 存在时间误差

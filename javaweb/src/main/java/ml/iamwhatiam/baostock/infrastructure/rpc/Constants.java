@@ -8,7 +8,7 @@ import java.util.Map;
 public final class Constants {
     
     // 版本信息
-    public static final String BAOSTOCK_CLIENT_VERSION = "00.8.80";
+    public static final String BAOSTOCK_CLIENT_VERSION = "00.8.90";
     public static final String BAOSTOCK_AUTHOR = "baostock.com";
     public static final String BAOSTOCK_SERVER_IP = "www.baostock.com";  // localhost  www.baostock.com  10.25.7.4
     public static final int BAOSTOCK_SERVER_PORT = 10030;
